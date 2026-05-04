@@ -10,19 +10,51 @@ The application is designed as a portfolio project. It will provide a REST API f
 
 ## Current Status
 
-The basic Spring Boot setup is complete. The application is connected to a local PostgreSQL database. The initial ticket data model has been implemented as a JPA entity with status and priority enums. A Spring Data JPA repository has been added for persistence operations and query methods. Request and response DTOs have been added with validation rules for clean API input handling. The service layer has been implemented to handle ticket business logic.
+The basic Spring Boot setup is complete. The application is connected to a local PostgreSQL database. The initial ticket data model has been implemented as a JPA entity with status and priority enums. A Spring Data JPA repository has been added for persistence operations and query methods. Request and response DTOs have been added with validation rules for clean API input handling. A mapper has been implemented to convert between entities and DTOs. The service layer has been implemented to handle ticket business logic.
+
+Ticket REST endpoints are not implemented yet.
 
 ## Tech Stack
 
-1. Java 21
-2. Spring Boot
-3. Spring Web
+1. Java 21  
+   Main programming language for the backend application.
+
+2. Spring Boot  
+   Application framework used to build and run the backend service.
+
+3. Spring Web  
+   Used for REST endpoints.
+
 4. Spring Data JPA  
-5. Hibernate
-6. PostgreSQL
-7. Maven
-8. Spring Boot Actuator
-9. GitHub
+   Used for persistence and repository based database access.
+
+5. Hibernate  
+   JPA implementation used to map Java entities to database tables.
+
+6. PostgreSQL  
+   Relational database used to store ticket data.
+
+7. Maven  
+   Build tool used for dependency management, tests, and packaging.
+
+8. Jakarta Validation  
+   Used for request validation rules.
+
+9. Spring Boot Actuator  
+   Used for technical health checks.
+
+10. JUnit  
+    Used for automated tests.
+
+11. Mockito  
+    Used for isolated service tests with mocked dependencies.
+
+12. AssertJ  
+    Used for readable test assertions.
+
+13. GitHub  
+    Used for version control and project hosting.
+
 ## Data Model
 
 The central entity of the application is `Ticket`.
@@ -73,23 +105,34 @@ Important mapping decisions:
 7. `createdAt` is set when the ticket is created.
 8. `updatedAt` is updated when the ticket changes.
 
-## Database
+## Repository Layer
 
-The application uses PostgreSQL as its relational database.
+The `TicketRepository` is the persistence layer for `Ticket` entities.
 
-Local development database configuration:
+It extends:
 
-```properties
-spring.datasource.url=jdbc:postgresql://localhost:5432/incident_ticket_db
-spring.datasource.username=incident_user
-spring.datasource.password=incident_password
-spring.datasource.driver-class-name=org.postgresql.Driver
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.format_sql=true
+```java
+JpaRepository<Ticket, Long>
 ```
 
-The `tickets` table is generated from the `Ticket` JPA entity during local development.
+This provides standard persistence operations such as:
+
+1. `save`
+2. `findById`
+3. `findAll`
+4. `delete`
+5. `deleteById`
+6. `existsById`
+7. `count`
+
+Custom query methods:
+
+1. `findByStatus`
+2. `findByPriority`
+3. `findByAssignee`
+4. `findByStatusAndPriority`
+
+These methods are derived query methods. Spring Data JPA creates the required queries based on the method names.
 
 ## API DTOs
 
@@ -102,14 +145,27 @@ Implemented DTOs:
 3. `UpdateTicketStatusRequest`
 4. `TicketResponse`
 
-Validation rules:
+### Validation Rules
 
-1. `title` cannot be blank.
-2. `title` cannot have more than 120 characters.
-3. `description` cannot be blank.
-4. `priority` cannot be null.
-5. `status` cannot be null when updating ticket status.
-6. `assignee` is optional, but cannot be more than 120 characters.
+1. `title` must not be blank.
+2. `title` must be at most 120 characters.
+3. `description` must not be blank.
+4. `priority` must not be null.
+5. `status` must not be null when updating ticket status.
+6. `assignee` is optional, but must be at most 120 characters.
+
+## Mapper Layer
+
+The `TicketMapper` converts between `Ticket` entities and DTOs.
+
+Implemented mapping methods:
+
+1. `toEntity`
+2. `toResponse`
+3. `toResponseList`
+4. `updateEntity`
+
+The mapper keeps conversion logic out of the controller and service classes.
 
 ## Service Layer
 
@@ -131,6 +187,41 @@ The service uses `TicketRepository` for persistence operations and `TicketMapper
 
 If a ticket does not exist, the service throws `TicketNotFoundException`.
 
+Read operations use read only transactions. Write operations use regular transactions.
+
+## Exception Handling
+
+Currently implemented:
+
+1. `TicketNotFoundException`
+
+Not implemented yet:
+
+1. Central exception handler
+2. HTTP 404 mapping for missing tickets
+3. HTTP 400 mapping for validation errors
+4. Consistent API error response body
+
+Centralized REST error handling will be implemented in a later step.
+
+## Database
+
+The application uses PostgreSQL as its relational database.
+
+Local development database configuration:
+
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/incident_ticket_db
+spring.datasource.username=incident_user
+spring.datasource.password=incident_password
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+```
+
+The `tickets` table is generated from the `Ticket` JPA entity during local development.
+
 ## Start PostgreSQL Locally
 
 For local development, PostgreSQL can be started with Docker:
@@ -148,6 +239,12 @@ Check if the container is running:
 
 ```bash
 docker ps
+```
+
+Start an existing PostgreSQL container:
+
+```bash
+docker start incident-ticket-postgres
 ```
 
 Connect to the database:
@@ -216,6 +313,35 @@ Expected response:
 pong
 ```
 
+## Tests
+
+Run all tests:
+
+```bash
+./mvnw test
+```
+
+On Windows PowerShell:
+
+```powershell
+.\mvnw.cmd test
+```
+
+Currently implemented test categories:
+
+1. Repository tests
+2. DTO validation tests
+3. Mapper tests
+4. Service unit tests
+
+Repository tests verify persistence operations and query methods.
+
+DTO validation tests verify request validation rules.
+
+Mapper tests verify conversion between entities and DTOs.
+
+Service unit tests verify business logic with a mocked repository.
+
 ## Project Structure
 
 ```text
@@ -224,7 +350,7 @@ src
     java
       com
         example
-          incident_ticket_api
+          incidentticketapi
             controller
               PingController.java
             dto
@@ -251,7 +377,7 @@ src
     java
       com
         example
-          incident_ticket_api
+          incidentticketapi
             dto
               CreateTicketRequestValidationTest.java
               UpdateTicketRequestValidationTest.java
@@ -267,36 +393,64 @@ pom.xml
 README.md
 ```
 
-## Known Limitations
-
-The project is still in an early stage.
-
-Currently implemented:
+## Currently Implemented
 
 1. Basic Spring Boot application setup
 2. PostgreSQL connection
 3. Ticket JPA entity
 4. Ticket status enum
 5. Ticket priority enum
-6. Health check endpoint
-7. Ping endpoint
-8. Ticket repository
-9. Repository tests
-10. Request and response DTOs
-11. DTO validation rules
-12. Ticket mapper
-13. DTO validation tests
-14. Mapper tests
-15. Ticket service layer
-16. Ticket business logic
-17. TicketNotFoundException
-18. Service unit tests
+6. Ticket repository
+7. Repository query methods
+8. Repository tests
+9. Request and response DTOs
+10. DTO validation rules
+11. Ticket mapper
+12. DTO validation tests
+13. Mapper tests
+14. Ticket service layer
+15. Ticket business logic
+16. TicketNotFoundException
+17. Service unit tests
+18. Health check endpoint
+19. Ping endpoint
 
-Not implemented yet:
+## Not Implemented Yet
 
-1. Ticket REST endpoints 
-2. Error handling 
-3. Automated service and controller tests 
-4. Docker Compose setup 
-5. OpenAPI documentation 
-6. GitHub Actions CI pipeline
+1. Ticket REST controller
+2. HTTP request validation in REST controllers
+3. Central validation error handling
+4. Central exception handling
+5. Consistent API error response body
+6. OpenAPI documentation
+7. Dockerfile
+8. Docker Compose setup
+9. GitHub Actions CI pipeline
+10. Integration tests with full API flow
+
+## Planned REST Endpoints
+
+These endpoints are planned, but not implemented yet:
+
+```text
+POST /api/tickets
+GET /api/tickets
+GET /api/tickets/{id}
+PUT /api/tickets/{id}
+PATCH /api/tickets/{id}/status
+DELETE /api/tickets/{id}
+GET /api/tickets?status=OPEN
+GET /api/tickets?priority=HIGH
+```
+
+## Roadmap
+
+1. Implement REST controller for ticket operations.
+2. Connect DTO validation to controller methods with `@Valid`.
+3. Add central exception handling.
+4. Add consistent API error responses.
+5. Add OpenAPI documentation with Swagger UI.
+6. Add Dockerfile.
+7. Add Docker Compose setup for application and PostgreSQL.
+8. Add GitHub Actions CI pipeline.
+9. Add integration tests.

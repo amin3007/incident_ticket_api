@@ -10,7 +10,7 @@ The application is designed as a portfolio project. It will provide a REST API f
 
 ## Current Status
 
-The basic Spring Boot setup is complete. The application is connected to a local PostgreSQL database. The initial ticket data model has been implemented as a JPA entity with status and priority enums. A Spring Data JPA repository has been added for basic persistence operations and query methods. Request and response DTOs have been added with validation rules for clean API input handling.
+The basic Spring Boot setup is complete. The application is connected to a local PostgreSQL database. The initial ticket data model has been implemented as a JPA entity with status and priority enums. A Spring Data JPA repository has been added for persistence operations and query methods. Request and response DTOs have been added with validation rules for clean API input handling. The service layer has been implemented to handle ticket business logic.
 
 ## Tech Stack
 
@@ -110,6 +110,26 @@ Validation rules:
 4. `priority` cannot be null.
 5. `status` cannot be null when updating ticket status.
 6. `assignee` is optional, but cannot be more than 120 characters.
+
+## Service Layer
+
+The `TicketService` contains the business logic for ticket operations.
+
+Implemented service methods:
+
+1. `createTicket`
+2. `getAllTickets`
+3. `getTicketById`
+4. `updateTicket`
+5. `updateTicketStatus`
+6. `deleteTicket`
+7. `findByStatus`
+8. `findByPriority`
+9. `findByStatusAndPriority`
+
+The service uses `TicketRepository` for persistence operations and `TicketMapper` for converting between entities and DTOs.
+
+If a ticket does not exist, the service throws `TicketNotFoundException`.
 
 ## Start PostgreSQL Locally
 
@@ -212,6 +232,8 @@ src
               TicketResponse.java
               UpdateTicketRequest.java
               UpdateTicketStatusRequest.java
+            exception
+              TicketNotFoundException.java
             mapper
               TicketMapper.java
             model
@@ -220,6 +242,8 @@ src
               TicketStatus.java
             repository
               TicketRepository.java
+            service
+              TicketService.java
             IncidentTicketApiApplication.java
     resources
       application.properties
@@ -227,7 +251,7 @@ src
     java
       com
         example
-          incidentticketapi
+          incident_ticket_api
             dto
               CreateTicketRequestValidationTest.java
               UpdateTicketRequestValidationTest.java
@@ -236,6 +260,8 @@ src
               TicketMapperTest.java
             repository
               TicketRepositoryTest.java
+            service
+              TicketServiceTest.java
             IncidentTicketApiApplicationTests.java
 pom.xml
 README.md
@@ -261,13 +287,16 @@ Currently implemented:
 12. Ticket mapper
 13. DTO validation tests
 14. Mapper tests
+15. Ticket service layer
+16. Ticket business logic
+17. TicketNotFoundException
+18. Service unit tests
 
 Not implemented yet:
 
-1. Ticket service layer
-2. Ticket REST endpoints
-3. Error handling
-4. Automated service and controller tests
-5. Docker Compose setup
-6. OpenAPI documentation
-7. GitHub Actions CI pipeline
+1. Ticket REST endpoints 
+2. Error handling 
+3. Automated service and controller tests 
+4. Docker Compose setup 
+5. OpenAPI documentation 
+6. GitHub Actions CI pipeline

@@ -60,6 +60,13 @@ public class Ticket{
         this.assignedTo = assignedTo;
     }
 
+    /** This constructor allows you to create a new Ticket instance with the specified title, description, priority, and assignedTo values.
+     * The status will be set to OPEN by default, and the createdAt and updatedAt fields will be automatically set when the entity is persisted to the database.
+     */
+    public Ticket(String title, String description, TicketPriority priority, String assignedTo) {
+        this(title, description, TicketStatus.OPEN, priority, assignedTo);
+    }
+
     @PrePersist
     void onCreate() {
         this.createdAt = LocalDateTime.now();

@@ -10,7 +10,7 @@ The application is designed as a portfolio project. It will provide a REST API f
 
 ## Current Status
 
-The basic Spring Boot setup is complete. The application is connected to a local PostgreSQL database. The initial ticket data model has been implemented as a JPA entity with status and priority enums. Hibernate creates or updates the local `tickets` table during development.
+The basic Spring Boot setup is complete. The application is connected to a local PostgreSQL database. The initial ticket data model has been implemented as a JPA entity with status and priority enums. A Spring Data JPA repository has been added for basic persistence operations and query methods.
 
 ## Tech Stack
 
@@ -200,6 +200,8 @@ src
       com
         example
           incidentticketapi
+            repository
+                TicketRepository.java
             IncidentTicketApiApplicationTests.java
 pom.xml
 README.md
@@ -218,16 +220,17 @@ Currently implemented:
 5. Ticket priority enum
 6. Health check endpoint
 7. Ping endpoint
+8. Ticket repository
+9. Repository tests
 
 Not implemented yet:
 
-1. Ticket repository
-2. Ticket service layer
-3. Ticket REST endpoints
-4. Request and response DTOs
-5. Validation
-6. Error handling
-7. Automated service and controller tests
-8. Docker Compose setup
-9. OpenAPI documentation
-10. GitHub Actions CI pipeline
+1. Ticket service layer
+2. Ticket REST endpoints
+3. Request and response DTOs
+4. Validation
+5. Error handling
+6. Automated service and controller tests
+7. Docker Compose setup
+8. OpenAPI documentation
+9. GitHub Actions CI pipeline

@@ -10,9 +10,9 @@ The application is designed as a portfolio project. It provides a REST API for c
 
 ## Current Status
 
-The basic Spring Boot setup is complete. The application is connected to a local PostgreSQL database. The initial ticket data model has been implemented as a JPA entity with status and priority enums. A Spring Data JPA repository has been added for persistence operations and query methods. Request and response DTOs have been added with validation rules for clean API input handling. A mapper has been implemented to convert between entities and DTOs. The service layer has been implemented to handle ticket business logic. A REST controller has been added to expose ticket operations over HTTP.
+The basic Spring Boot setup is complete. The application is connected to a local PostgreSQL database. The initial ticket data model has been implemented as a JPA entity with status and priority enums. A Spring Data JPA repository has been added for persistence operations and query methods. Request and response DTOs have been added with validation rules for clean API input handling. A mapper has been implemented to convert between entities and DTOs. The service layer has been implemented to handle ticket business logic. A REST controller has been added to expose ticket operations over HTTP. Centralized exception handling has been implemented to provide consistent JSON error responses.
 
-Centralized error handling, OpenAPI documentation, Docker Compose, and GitHub Actions are not implemented yet.
+OpenAPI documentation, Swagger UI, Dockerfile, Docker Compose, GitHub Actions, and full integration tests are not implemented yet.
 
 ## Tech Stack
 
@@ -72,6 +72,14 @@ TicketRepository
 PostgreSQL
 ```
 
+## Package Structure
+
+The main Java package is:
+
+```text
+com.example.incident_ticket_api
+```
+
 ## Data Model
 
 The central entity of the application is `Ticket`.
@@ -119,8 +127,9 @@ Important mapping decisions:
 4. `description` is required.
 5. `status` is stored as a string enum.
 6. `priority` is stored as a string enum.
-7. `createdAt` is set when the ticket is created.
-8. `updatedAt` is updated when the ticket changes.
+7. `assignedTo` stores the assigned person or team.
+8. `createdAt` is set when the ticket is created.
+9. `updatedAt` is updated when the ticket changes.
 
 ## Repository Layer
 
@@ -258,8 +267,8 @@ Example response:
   "status": "OPEN",
   "priority": "HIGH",
   "assignedTo": "IT Support",
-  "createdAt": "2026-05-04T10:00:00",
-  "updatedAt": "2026-05-04T10:00:00"
+  "createdAt": "2026-05-09T10:00:00",
+  "updatedAt": "2026-05-09T10:00:00"
 }
 ```
 
@@ -382,19 +391,130 @@ Expected status:
 
 ## Exception Handling
 
-Currently implemented:
+The application uses centralized exception handling with `GlobalExceptionHandler`.
 
-1. `TicketNotFoundException`
+Implemented error handling:
 
-Not implemented yet:
+1. `TicketNotFoundException` returns `404 Not Found`.
+2. DTO validation errors return `400 Bad Request`.
+3. Malformed JSON request bodies return `400 Bad Request`.
+4. Invalid enum values in request bodies return `400 Bad Request`.
+5. Invalid query parameter values return `400 Bad Request`.
+6. Unexpected internal errors return `500 Internal Server Error`.
 
-1. Central exception handler
-2. HTTP 404 mapping for missing tickets
-3. HTTP 400 mapping for validation errors
-4. Consistent API error response body
-5. Error response format for invalid enum values
+### Error Response Format
 
-Centralized REST error handling will be implemented in a later step.
+```json
+{
+  "timestamp": "2026-05-09T12:30:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Validation failed",
+  "path": "/api/tickets",
+  "fieldErrors": [
+    {
+      "field": "title",
+      "message": "Title must not be blank"
+    }
+  ]
+}
+```
+
+### Example: Ticket Not Found
+
+```http
+GET /api/tickets/999999
+```
+
+Expected status:
+
+```text
+404 Not Found
+```
+
+Example response:
+
+```json
+{
+  "timestamp": "2026-05-09T12:30:00",
+  "status": 404,
+  "error": "Not Found",
+  "message": "Ticket with id 999999 was not found",
+  "path": "/api/tickets/999999",
+  "fieldErrors": []
+}
+```
+
+### Example: Validation Error
+
+```http
+POST /api/tickets
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "title": "",
+  "description": "A user cannot log in.",
+  "priority": "HIGH",
+  "assignedTo": "IT Support"
+}
+```
+
+Expected status:
+
+```text
+400 Bad Request
+```
+
+Example response:
+
+```json
+{
+  "timestamp": "2026-05-09T12:30:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Validation failed",
+  "path": "/api/tickets",
+  "fieldErrors": [
+    {
+      "field": "title",
+      "message": "Title must not be blank"
+    }
+  ]
+}
+```
+
+### Example: Invalid Enum Value In Request Body
+
+```json
+{
+  "title": "Login not working",
+  "description": "A user cannot log in.",
+  "priority": "URGENT",
+  "assignedTo": "IT Support"
+}
+```
+
+Expected status:
+
+```text
+400 Bad Request
+```
+
+### Example: Invalid Query Parameter
+
+```http
+GET /api/tickets?status=INVALID
+```
+
+Expected status:
+
+```text
+400 Bad Request
+```
 
 ## Database
 
@@ -403,10 +523,14 @@ The application uses PostgreSQL as its relational database.
 Local development database configuration:
 
 ```properties
+spring.application.name=incident_ticket_api
+server.port=8080
+
 spring.datasource.url=jdbc:postgresql://localhost:5432/incident_ticket_db
 spring.datasource.username=incident_user
 spring.datasource.password=incident_password
 spring.datasource.driver-class-name=org.postgresql.Driver
+
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
@@ -573,6 +697,38 @@ curl -i -X PATCH http://localhost:8080/api/tickets/1/status \
 curl -i -X DELETE http://localhost:8080/api/tickets/1
 ```
 
+### Test validation error
+
+```bash
+curl -i -X POST http://localhost:8080/api/tickets \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "",
+    "description": "A user cannot log in.",
+    "priority": "HIGH",
+    "assignedTo": "IT Support"
+  }'
+```
+
+### Test invalid enum value
+
+```bash
+curl -i -X POST http://localhost:8080/api/tickets \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Login not working",
+    "description": "A user cannot log in.",
+    "priority": "URGENT",
+    "assignedTo": "IT Support"
+  }'
+```
+
+### Test invalid query parameter
+
+```bash
+curl -i "http://localhost:8080/api/tickets?status=INVALID"
+```
+
 ## Tests
 
 Run all tests:
@@ -594,6 +750,7 @@ Currently implemented test categories:
 3. Mapper tests
 4. Service unit tests
 5. Controller tests
+6. Error handling tests
 
 Repository tests verify persistence operations and query methods.
 
@@ -605,6 +762,8 @@ Service unit tests verify business logic with a mocked repository.
 
 Controller tests verify request mappings, HTTP status codes, JSON responses, and request validation behavior with MockMvc.
 
+Error handling tests verify consistent JSON error responses for missing tickets, validation errors, invalid request bodies, and invalid query parameters.
+
 ## Project Structure
 
 ```text
@@ -613,7 +772,7 @@ src
     java
       com
         example
-          incidentticketapi
+          incident_ticket_api
             controller
               PingController.java
               TicketController.java
@@ -623,6 +782,9 @@ src
               UpdateTicketRequest.java
               UpdateTicketStatusRequest.java
             exception
+              ApiErrorResponse.java
+              FieldErrorResponse.java
+              GlobalExceptionHandler.java
               TicketNotFoundException.java
             mapper
               TicketMapper.java
@@ -641,7 +803,7 @@ src
     java
       com
         example
-          incidentticketapi
+          incident_ticket_api
             controller
               TicketControllerTest.java
             dto
@@ -676,36 +838,39 @@ README.md
 13. Mapper tests
 14. Ticket service layer
 15. Ticket business logic
-16. TicketNotFoundException
-17. Service unit tests
-18. Ticket REST controller
-19. Ticket CRUD endpoints
-20. Ticket filter endpoints
-21. Controller validation with `@Valid`
-22. Controller tests with MockMvc
-23. Health check endpoint
-24. Ping endpoint
+16. Ticket REST controller
+17. Ticket CRUD endpoints
+18. Ticket filter endpoints
+19. Controller validation with `@Valid`
+20. Controller tests with MockMvc
+21. `TicketNotFoundException`
+22. Central exception handling
+23. Consistent JSON error responses
+24. Validation error response format
+25. Invalid request body handling
+26. Invalid query parameter handling
+27. Error handling tests
+28. Health check endpoint
+29. Ping endpoint
 
 ## Not Implemented Yet
 
-1. Central validation error handling
-2. Central exception handling
-3. Consistent API error response body
-4. OpenAPI documentation
-5. Swagger UI
-6. Dockerfile
-7. Docker Compose setup
-8. GitHub Actions CI pipeline
-9. Integration tests with full API flow
-10. Deployment configuration
+1. OpenAPI documentation
+2. Swagger UI
+3. Dockerfile
+4. Docker Compose setup
+5. GitHub Actions CI pipeline
+6. Integration tests with full API flow
+7. Deployment configuration
+8. Final architecture diagram
+9. Demo screenshots
 
 ## Roadmap
 
-1. Implement central exception handling.
-2. Add consistent API error responses.
-3. Add OpenAPI documentation with Swagger UI.
-4. Add Dockerfile.
-5. Add Docker Compose setup for application and PostgreSQL.
-6. Add GitHub Actions CI pipeline.
-7. Add integration tests.
-8. Add final architecture diagram and screenshots.
+1. Add OpenAPI documentation with Swagger UI.
+2. Add Dockerfile.
+3. Add Docker Compose setup for application and PostgreSQL.
+4. Add GitHub Actions CI pipeline.
+5. Add integration tests with full API flow.
+6. Add final architecture diagram and screenshots.
+7. Prepare final CV project description.

@@ -16,6 +16,8 @@ import org.springframework.http.MediaType;
 import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import com.example.incident_ticket_api.exception.GlobalExceptionHandler;
+import com.example.incident_ticket_api.exception.TicketNotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -48,6 +50,7 @@ class TicketControllerTest {
 
         mockMvc = MockMvcBuilders
                 .standaloneSetup(new TicketController(ticketService))
+                .setControllerAdvice(new GlobalExceptionHandler())
                 .setValidator(validator)
                 .build();
 
@@ -218,7 +221,22 @@ class TicketControllerTest {
     }
 
     @Test
-    void shouldRejectCreateTicketRequestWithBlankTitle() throws Exception {
+    void shouldReturnNotFoundWhenTicketDoesNotExist() throws Exception {
+        when(ticketService.getTicketById(999L))
+                .thenThrow(new TicketNotFoundException(999L));
+
+        mockMvc.perform(get("/api/tickets/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.error").value("Not Found"))
+                .andExpect(jsonPath("$.message").value("Ticket with id 999 was not found"))
+                .andExpect(jsonPath("$.path").value("/api/tickets/999"));
+
+        verify(ticketService).getTicketById(999L);
+    }
+
+    @Test
+    void shouldReturnValidationErrorResponseForBlankTitle() throws Exception {
         CreateTicketRequest request = new CreateTicketRequest(
                 "",
                 "A user cannot log in to the internal dashboard.",
@@ -229,7 +247,48 @@ class TicketControllerTest {
         mockMvc.perform(post("/api/tickets")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("Validation failed"))
+                .andExpect(jsonPath("$.path").value("/api/tickets"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("title"));
+
+        verifyNoInteractions(ticketService);
+    }
+
+    @Test
+    void shouldReturnBadRequestForInvalidPriorityInRequestBody() throws Exception {
+        String invalidJson = """
+            {
+              "title": "Login not working",
+              "description": "A user cannot log in.",
+              "priority": "URGENT",
+              "assignedTo": "IT Support"
+            }
+            """;
+
+        mockMvc.perform(post("/api/tickets")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(invalidJson))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("Request body is missing, malformed, or contains invalid values"))
+                .andExpect(jsonPath("$.path").value("/api/tickets"));
+
+        verifyNoInteractions(ticketService);
+    }
+
+    @Test
+    void shouldReturnBadRequestForInvalidStatusQueryParameter() throws Exception {
+        mockMvc.perform(get("/api/tickets")
+                        .param("status", "INVALID"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.message").value("Invalid value for parameter 'status'"))
+                .andExpect(jsonPath("$.path").value("/api/tickets"));
 
         verifyNoInteractions(ticketService);
     }

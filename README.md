@@ -6,13 +6,13 @@ A REST API for managing internal IT incident tickets.
 
 This project demonstrates backend development with Spring Boot, PostgreSQL, validation, testing, Docker, OpenAPI documentation, and a CI pipeline.
 
-The application is designed as a portfolio project. It will provide a REST API for creating, reading, updating, deleting, and filtering internal IT incident tickets.
+The application is designed as a portfolio project. It provides a REST API for creating, reading, updating, deleting, and filtering internal IT incident tickets.
 
 ## Current Status
 
-The basic Spring Boot setup is complete. The application is connected to a local PostgreSQL database. The initial ticket data model has been implemented as a JPA entity with status and priority enums. A Spring Data JPA repository has been added for persistence operations and query methods. Request and response DTOs have been added with validation rules for clean API input handling. A mapper has been implemented to convert between entities and DTOs. The service layer has been implemented to handle ticket business logic.
+The basic Spring Boot setup is complete. The application is connected to a local PostgreSQL database. The initial ticket data model has been implemented as a JPA entity with status and priority enums. A Spring Data JPA repository has been added for persistence operations and query methods. Request and response DTOs have been added with validation rules for clean API input handling. A mapper has been implemented to convert between entities and DTOs. The service layer has been implemented to handle ticket business logic. A REST controller has been added to expose ticket operations over HTTP.
 
-Ticket REST endpoints are not implemented yet.
+Centralized error handling, OpenAPI documentation, Docker Compose, and GitHub Actions are not implemented yet.
 
 ## Tech Stack
 
@@ -47,13 +47,30 @@ Ticket REST endpoints are not implemented yet.
     Used for automated tests.
 
 11. Mockito  
-    Used for isolated service tests with mocked dependencies.
+    Used for isolated service and controller tests with mocked dependencies.
 
 12. AssertJ  
     Used for readable test assertions.
 
-13. GitHub  
+13. MockMvc  
+    Used for testing Spring MVC controllers without starting a real server.
+
+14. GitHub  
     Used for version control and project hosting.
+
+## Architecture Overview
+
+```text
+Client
+  ↓
+TicketController
+  ↓
+TicketService
+  ↓
+TicketRepository
+  ↓
+PostgreSQL
+```
 
 ## Data Model
 
@@ -66,7 +83,7 @@ A ticket contains the following fields:
 3. `description`
 4. `status`
 5. `priority`
-6. `assignee`
+6. `assignedTo`
 7. `createdAt`
 8. `updatedAt`
 
@@ -129,7 +146,7 @@ Custom query methods:
 
 1. `findByStatus`
 2. `findByPriority`
-3. `findByAssignee`
+3. `findByAssignedTo`
 4. `findByStatusAndPriority`
 
 These methods are derived query methods. Spring Data JPA creates the required queries based on the method names.
@@ -152,7 +169,7 @@ Implemented DTOs:
 3. `description` must not be blank.
 4. `priority` must not be null.
 5. `status` must not be null when updating ticket status.
-6. `assignee` is optional, but must be at most 120 characters.
+6. `assignedTo` is optional, but must be at most 120 characters.
 
 ## Mapper Layer
 
@@ -189,6 +206,180 @@ If a ticket does not exist, the service throws `TicketNotFoundException`.
 
 Read operations use read only transactions. Write operations use regular transactions.
 
+## REST API
+
+The `TicketController` exposes ticket operations over HTTP.
+
+Implemented endpoints:
+
+```text
+POST /api/tickets
+GET /api/tickets
+GET /api/tickets/{id}
+PUT /api/tickets/{id}
+PATCH /api/tickets/{id}/status
+DELETE /api/tickets/{id}
+GET /api/tickets?status=OPEN
+GET /api/tickets?priority=HIGH
+GET /api/tickets?status=OPEN&priority=HIGH
+```
+
+### Create Ticket
+
+```http
+POST /api/tickets
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "title": "Login not working",
+  "description": "A user cannot log in to the internal dashboard.",
+  "priority": "HIGH",
+  "assignedTo": "IT Support"
+}
+```
+
+Expected status:
+
+```text
+201 Created
+```
+
+Example response:
+
+```json
+{
+  "id": 1,
+  "title": "Login not working",
+  "description": "A user cannot log in to the internal dashboard.",
+  "status": "OPEN",
+  "priority": "HIGH",
+  "assignedTo": "IT Support",
+  "createdAt": "2026-05-04T10:00:00",
+  "updatedAt": "2026-05-04T10:00:00"
+}
+```
+
+### Get All Tickets
+
+```http
+GET /api/tickets
+```
+
+Expected status:
+
+```text
+200 OK
+```
+
+### Get Ticket By ID
+
+```http
+GET /api/tickets/{id}
+```
+
+Expected status:
+
+```text
+200 OK
+```
+
+### Filter Tickets By Status
+
+```http
+GET /api/tickets?status=OPEN
+```
+
+Expected status:
+
+```text
+200 OK
+```
+
+### Filter Tickets By Priority
+
+```http
+GET /api/tickets?priority=HIGH
+```
+
+Expected status:
+
+```text
+200 OK
+```
+
+### Filter Tickets By Status And Priority
+
+```http
+GET /api/tickets?status=OPEN&priority=HIGH
+```
+
+Expected status:
+
+```text
+200 OK
+```
+
+### Update Ticket
+
+```http
+PUT /api/tickets/{id}
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "title": "Updated title",
+  "description": "Updated description",
+  "priority": "MEDIUM",
+  "assignedTo": "Backend Team"
+}
+```
+
+Expected status:
+
+```text
+200 OK
+```
+
+### Update Ticket Status
+
+```http
+PATCH /api/tickets/{id}/status
+Content-Type: application/json
+```
+
+Request body:
+
+```json
+{
+  "status": "IN_PROGRESS"
+}
+```
+
+Expected status:
+
+```text
+200 OK
+```
+
+### Delete Ticket
+
+```http
+DELETE /api/tickets/{id}
+```
+
+Expected status:
+
+```text
+204 No Content
+```
+
 ## Exception Handling
 
 Currently implemented:
@@ -201,6 +392,7 @@ Not implemented yet:
 2. HTTP 404 mapping for missing tickets
 3. HTTP 400 mapping for validation errors
 4. Consistent API error response body
+5. Error response format for invalid enum values
 
 Centralized REST error handling will be implemented in a later step.
 
@@ -259,7 +451,7 @@ List tables:
 \dt
 ```
 
-Describe the tickets table:
+Describe the `tickets` table:
 
 ```sql
 \d tickets
@@ -313,6 +505,74 @@ Expected response:
 pong
 ```
 
+## Manual API Testing
+
+### Create a ticket
+
+```bash
+curl -i -X POST http://localhost:8080/api/tickets \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Login not working",
+    "description": "A user cannot log in to the internal dashboard.",
+    "priority": "HIGH",
+    "assignedTo": "IT Support"
+  }'
+```
+
+### Get all tickets
+
+```bash
+curl -i http://localhost:8080/api/tickets
+```
+
+### Get one ticket by ID
+
+```bash
+curl -i http://localhost:8080/api/tickets/1
+```
+
+### Filter tickets by status
+
+```bash
+curl -i "http://localhost:8080/api/tickets?status=OPEN"
+```
+
+### Filter tickets by priority
+
+```bash
+curl -i "http://localhost:8080/api/tickets?priority=HIGH"
+```
+
+### Update a ticket
+
+```bash
+curl -i -X PUT http://localhost:8080/api/tickets/1 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Updated title",
+    "description": "Updated description",
+    "priority": "MEDIUM",
+    "assignedTo": "Backend Team"
+  }'
+```
+
+### Update ticket status
+
+```bash
+curl -i -X PATCH http://localhost:8080/api/tickets/1/status \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "IN_PROGRESS"
+  }'
+```
+
+### Delete a ticket
+
+```bash
+curl -i -X DELETE http://localhost:8080/api/tickets/1
+```
+
 ## Tests
 
 Run all tests:
@@ -333,6 +593,7 @@ Currently implemented test categories:
 2. DTO validation tests
 3. Mapper tests
 4. Service unit tests
+5. Controller tests
 
 Repository tests verify persistence operations and query methods.
 
@@ -341,6 +602,8 @@ DTO validation tests verify request validation rules.
 Mapper tests verify conversion between entities and DTOs.
 
 Service unit tests verify business logic with a mocked repository.
+
+Controller tests verify request mappings, HTTP status codes, JSON responses, and request validation behavior with MockMvc.
 
 ## Project Structure
 
@@ -353,6 +616,7 @@ src
           incidentticketapi
             controller
               PingController.java
+              TicketController.java
             dto
               CreateTicketRequest.java
               TicketResponse.java
@@ -378,6 +642,8 @@ src
       com
         example
           incidentticketapi
+            controller
+              TicketControllerTest.java
             dto
               CreateTicketRequestValidationTest.java
               UpdateTicketRequestValidationTest.java
@@ -412,45 +678,34 @@ README.md
 15. Ticket business logic
 16. TicketNotFoundException
 17. Service unit tests
-18. Health check endpoint
-19. Ping endpoint
+18. Ticket REST controller
+19. Ticket CRUD endpoints
+20. Ticket filter endpoints
+21. Controller validation with `@Valid`
+22. Controller tests with MockMvc
+23. Health check endpoint
+24. Ping endpoint
 
 ## Not Implemented Yet
 
-1. Ticket REST controller
-2. HTTP request validation in REST controllers
-3. Central validation error handling
-4. Central exception handling
-5. Consistent API error response body
-6. OpenAPI documentation
-7. Dockerfile
-8. Docker Compose setup
-9. GitHub Actions CI pipeline
-10. Integration tests with full API flow
-
-## Planned REST Endpoints
-
-These endpoints are planned, but not implemented yet:
-
-```text
-POST /api/tickets
-GET /api/tickets
-GET /api/tickets/{id}
-PUT /api/tickets/{id}
-PATCH /api/tickets/{id}/status
-DELETE /api/tickets/{id}
-GET /api/tickets?status=OPEN
-GET /api/tickets?priority=HIGH
-```
+1. Central validation error handling
+2. Central exception handling
+3. Consistent API error response body
+4. OpenAPI documentation
+5. Swagger UI
+6. Dockerfile
+7. Docker Compose setup
+8. GitHub Actions CI pipeline
+9. Integration tests with full API flow
+10. Deployment configuration
 
 ## Roadmap
 
-1. Implement REST controller for ticket operations.
-2. Connect DTO validation to controller methods with `@Valid`.
-3. Add central exception handling.
-4. Add consistent API error responses.
-5. Add OpenAPI documentation with Swagger UI.
-6. Add Dockerfile.
-7. Add Docker Compose setup for application and PostgreSQL.
-8. Add GitHub Actions CI pipeline.
-9. Add integration tests.
+1. Implement central exception handling.
+2. Add consistent API error responses.
+3. Add OpenAPI documentation with Swagger UI.
+4. Add Dockerfile.
+5. Add Docker Compose setup for application and PostgreSQL.
+6. Add GitHub Actions CI pipeline.
+7. Add integration tests.
+8. Add final architecture diagram and screenshots.

@@ -1,67 +1,36 @@
 # Incident Ticket API
 
-A REST API for managing internal IT incident tickets.
+A backend portfolio project for managing internal IT incident tickets through a REST API.
 
-## Project Goal
-
-This project demonstrates backend development with Spring Boot, PostgreSQL, validation, testing, centralized error handling, OpenAPI documentation, Docker, and a CI pipeline.
-
-The application is designed as a portfolio project. It provides a REST API for creating, reading, updating, deleting, and filtering internal IT incident tickets.
-
-## Current Status
-
-The basic Spring Boot setup is complete. The application is connected to a local PostgreSQL database. The initial ticket data model has been implemented as a JPA entity with status and priority enums. A Spring Data JPA repository has been added for persistence operations and query methods. Request and response DTOs have been added with validation rules for clean API input handling. A mapper has been implemented to convert between entities and DTOs. The service layer has been implemented to handle ticket business logic. A REST controller has been added to expose ticket operations over HTTP. Centralized exception handling has been implemented to provide consistent JSON error responses. OpenAPI documentation and Swagger UI have been added to document and test the API in the browser.
-
-Dockerfile, Docker Compose, GitHub Actions, full integration tests, and deployment configuration are not implemented yet.
+The project demonstrates practical backend development with Spring Boot, PostgreSQL, layered architecture, validation, automated tests, centralized error handling, OpenAPI documentation, and operational health checks.
 
 ## Tech Stack
 
-1. Java 21  
-   Main programming language for the backend application.
+- Java 21
+- Spring Boot
+- Spring Web
+- Spring Data JPA
+- Hibernate
+- PostgreSQL
+- Maven
+- Jakarta Validation
+- Spring Boot Actuator
+- springdoc-openapi
+- JUnit, Mockito, AssertJ, MockMvc
 
-2. Spring Boot  
-   Application framework used to build and run the backend service.
+## Current Features
 
-3. Spring Web  
-   Used for REST endpoints.
+- REST API for incident ticket management
+- PostgreSQL persistence with JPA entity mapping
+- Layered architecture: Controller, Service, Repository, DTOs, Mapper
+- Request validation with Jakarta Validation
+- Centralized JSON error handling
+- OpenAPI documentation with Swagger UI
+- Actuator health, info, metrics, liveness and readiness endpoints
+- Custom health indicator for the ticket repository
+- Automated tests for repository, DTO validation, mapper, service, controller and health indicator
 
-4. Spring Data JPA  
-   Used for persistence and repository based database access.
-
-5. Hibernate  
-   JPA implementation used to map Java entities to database tables.
-
-6. PostgreSQL  
-   Relational database used to store ticket data.
-
-7. Maven  
-   Build tool used for dependency management, tests, and packaging.
-
-8. Jakarta Validation  
-   Used for request validation rules.
-
-9. Spring Boot Actuator  
-   Used for technical health checks.
-
-10. springdoc-openapi  
-    Used to generate OpenAPI documentation and Swagger UI.
-
-11. JUnit  
-    Used for automated tests.
-
-12. Mockito  
-    Used for isolated service and controller tests with mocked dependencies.
-
-13. AssertJ  
-    Used for readable test assertions.
-
-14. MockMvc  
-    Used for testing Spring MVC controllers without starting a real server.
-
-15. GitHub  
-    Used for version control and project hosting.
-
-## Architecture Overview
+## Architecture
 
 ```text
 Client
@@ -75,9 +44,7 @@ TicketRepository
 PostgreSQL
 ```
 
-## Package Structure
-
-The main Java package is:
+Main package:
 
 ```text
 com.example.incident_ticket_api
@@ -85,165 +52,64 @@ com.example.incident_ticket_api
 
 ## Data Model
 
-The central entity of the application is `Ticket`.
+The central entity is `Ticket`.
 
-A ticket contains the following fields:
+Fields:
 
-1. `id`
-2. `title`
-3. `description`
-4. `status`
-5. `priority`
-6. `assignedTo`
-7. `createdAt`
-8. `updatedAt`
-
-### Ticket Status
-
-A ticket can have one of the following status values:
-
-1. `OPEN`
-2. `IN_PROGRESS`
-3. `RESOLVED`
-4. `CLOSED`
-
-### Ticket Priority
-
-A ticket can have one of the following priority values:
-
-1. `LOW`
-2. `MEDIUM`
-3. `HIGH`
-4. `CRITICAL`
-
-New tickets start with the default status `OPEN`.
-
-## Entity Mapping
-
-The `Ticket` class is mapped to the database table `tickets`.
-
-Important mapping decisions:
-
-1. `id` is the primary key.
-2. `id` is generated automatically.
-3. `title` is required.
-4. `description` is required.
-5. `status` is stored as a string enum.
-6. `priority` is stored as a string enum.
-7. `assignedTo` stores the assigned person or team.
-8. `createdAt` is set when the ticket is created.
-9. `updatedAt` is updated when the ticket changes.
-
-## Repository Layer
-
-The `TicketRepository` is the persistence layer for `Ticket` entities.
-
-It extends:
-
-```java
-JpaRepository<Ticket, Long>
+```text
+id
+title
+description
+status
+priority
+assignedTo
+createdAt
+updatedAt
 ```
 
-This provides standard persistence operations such as:
+Ticket status values:
 
-1. `save`
-2. `findById`
-3. `findAll`
-4. `delete`
-5. `deleteById`
-6. `existsById`
-7. `count`
+```text
+OPEN
+IN_PROGRESS
+RESOLVED
+CLOSED
+```
 
-Custom query methods:
+Ticket priority values:
 
-1. `findByStatus`
-2. `findByPriority`
-3. `findByAssignedTo`
-4. `findByStatusAndPriority`
+```text
+LOW
+MEDIUM
+HIGH
+CRITICAL
+```
 
-These methods are derived query methods. Spring Data JPA creates the required queries based on the method names.
-
-## API DTOs
-
-The project separates the internal database entity from the external API contract.
-
-Implemented DTOs:
-
-1. `CreateTicketRequest`
-2. `UpdateTicketRequest`
-3. `UpdateTicketStatusRequest`
-4. `TicketResponse`
-
-### Validation Rules
-
-1. `title` must not be blank.
-2. `title` must be at most 120 characters.
-3. `description` must not be blank.
-4. `priority` must not be null.
-5. `status` must not be null when updating ticket status.
-6. `assignedTo` is optional, but must be at most 120 characters.
-
-## Mapper Layer
-
-The `TicketMapper` converts between `Ticket` entities and DTOs.
-
-Implemented mapping methods:
-
-1. `toEntity`
-2. `toResponse`
-3. `toResponseList`
-4. `updateEntity`
-
-The mapper keeps conversion logic out of the controller and service classes.
-
-## Service Layer
-
-The `TicketService` contains the business logic for ticket operations.
-
-Implemented service methods:
-
-1. `createTicket`
-2. `getAllTickets`
-3. `getTicketById`
-4. `updateTicket`
-5. `updateTicketStatus`
-6. `deleteTicket`
-7. `findByStatus`
-8. `findByPriority`
-9. `findByStatusAndPriority`
-
-The service uses `TicketRepository` for persistence operations and `TicketMapper` for converting between entities and DTOs.
-
-If a ticket does not exist, the service throws `TicketNotFoundException`.
-
-Read operations use read only transactions. Write operations use regular transactions.
+New tickets start with status `OPEN`.
 
 ## REST API
-
-The `TicketController` exposes ticket operations over HTTP.
 
 Implemented endpoints:
 
 ```text
-POST /api/tickets
-GET /api/tickets
-GET /api/tickets/{id}
-PUT /api/tickets/{id}
-PATCH /api/tickets/{id}/status
+POST   /api/tickets
+GET    /api/tickets
+GET    /api/tickets/{id}
+PUT    /api/tickets/{id}
+PATCH  /api/tickets/{id}/status
 DELETE /api/tickets/{id}
-GET /api/tickets?status=OPEN
-GET /api/tickets?priority=HIGH
-GET /api/tickets?status=OPEN&priority=HIGH
+
+GET    /api/tickets?status=OPEN
+GET    /api/tickets?priority=HIGH
+GET    /api/tickets?status=OPEN&priority=HIGH
 ```
 
-### Create Ticket
+## Example Request
 
 ```http
 POST /api/tickets
 Content-Type: application/json
 ```
-
-Request body:
 
 ```json
 {
@@ -254,13 +120,7 @@ Request body:
 }
 ```
 
-Expected status:
-
-```text
-201 Created
-```
-
-Example response:
+## Example Response
 
 ```json
 {
@@ -275,137 +135,20 @@ Example response:
 }
 ```
 
-### Get All Tickets
+## Error Handling
 
-```http
-GET /api/tickets
-```
+The API uses centralized error handling with `GlobalExceptionHandler`.
 
-Expected status:
+Handled error cases:
 
-```text
-200 OK
-```
+- Missing ticket returns `404 Not Found`
+- Validation errors return `400 Bad Request`
+- Malformed JSON returns `400 Bad Request`
+- Invalid enum values return `400 Bad Request`
+- Invalid query parameters return `400 Bad Request`
+- Unexpected internal errors return `500 Internal Server Error`
 
-### Get Ticket By ID
-
-```http
-GET /api/tickets/{id}
-```
-
-Expected status:
-
-```text
-200 OK
-```
-
-### Filter Tickets By Status
-
-```http
-GET /api/tickets?status=OPEN
-```
-
-Expected status:
-
-```text
-200 OK
-```
-
-### Filter Tickets By Priority
-
-```http
-GET /api/tickets?priority=HIGH
-```
-
-Expected status:
-
-```text
-200 OK
-```
-
-### Filter Tickets By Status And Priority
-
-```http
-GET /api/tickets?status=OPEN&priority=HIGH
-```
-
-Expected status:
-
-```text
-200 OK
-```
-
-### Update Ticket
-
-```http
-PUT /api/tickets/{id}
-Content-Type: application/json
-```
-
-Request body:
-
-```json
-{
-  "title": "Updated title",
-  "description": "Updated description",
-  "priority": "MEDIUM",
-  "assignedTo": "Backend Team"
-}
-```
-
-Expected status:
-
-```text
-200 OK
-```
-
-### Update Ticket Status
-
-```http
-PATCH /api/tickets/{id}/status
-Content-Type: application/json
-```
-
-Request body:
-
-```json
-{
-  "status": "IN_PROGRESS"
-}
-```
-
-Expected status:
-
-```text
-200 OK
-```
-
-### Delete Ticket
-
-```http
-DELETE /api/tickets/{id}
-```
-
-Expected status:
-
-```text
-204 No Content
-```
-
-## Exception Handling
-
-The application uses centralized exception handling with `GlobalExceptionHandler`.
-
-Implemented error handling:
-
-1. `TicketNotFoundException` returns `404 Not Found`.
-2. DTO validation errors return `400 Bad Request`.
-3. Malformed JSON request bodies return `400 Bad Request`.
-4. Invalid enum values in request bodies return `400 Bad Request`.
-5. Invalid query parameter values return `400 Bad Request`.
-6. Unexpected internal errors return `500 Internal Server Error`.
-
-### Error Response Format
+Example error response:
 
 ```json
 {
@@ -421,121 +164,23 @@ Implemented error handling:
     }
   ]
 }
-```
-
-### Example: Ticket Not Found
-
-```http
-GET /api/tickets/999999
-```
-
-Expected status:
-
-```text
-404 Not Found
-```
-
-Example response:
-
-```json
-{
-  "timestamp": "2026-05-09T12:30:00",
-  "status": 404,
-  "error": "Not Found",
-  "message": "Ticket with id 999999 was not found",
-  "path": "/api/tickets/999999",
-  "fieldErrors": []
-}
-```
-
-### Example: Validation Error
-
-```http
-POST /api/tickets
-Content-Type: application/json
-```
-
-Request body:
-
-```json
-{
-  "title": "",
-  "description": "A user cannot log in.",
-  "priority": "HIGH",
-  "assignedTo": "IT Support"
-}
-```
-
-Expected status:
-
-```text
-400 Bad Request
-```
-
-Example response:
-
-```json
-{
-  "timestamp": "2026-05-09T12:30:00",
-  "status": 400,
-  "error": "Bad Request",
-  "message": "Validation failed",
-  "path": "/api/tickets",
-  "fieldErrors": [
-    {
-      "field": "title",
-      "message": "Title must not be blank"
-    }
-  ]
-}
-```
-
-### Example: Invalid Enum Value In Request Body
-
-```json
-{
-  "title": "Login not working",
-  "description": "A user cannot log in.",
-  "priority": "URGENT",
-  "assignedTo": "IT Support"
-}
-```
-
-Expected status:
-
-```text
-400 Bad Request
-```
-
-### Example: Invalid Query Parameter
-
-```http
-GET /api/tickets?status=INVALID
-```
-
-Expected status:
-
-```text
-400 Bad Request
 ```
 
 ## OpenAPI Documentation
 
-The API is documented with OpenAPI and Swagger UI.
-
-Swagger UI is available at:
+Swagger UI:
 
 ```text
 http://localhost:8080/swagger-ui.html
 ```
 
-The OpenAPI JSON description is available at:
+OpenAPI JSON:
 
 ```text
 http://localhost:8080/v3/api-docs
 ```
 
-The OpenAPI YAML description is available at:
+OpenAPI YAML:
 
 ```text
 http://localhost:8080/v3/api-docs.yaml
@@ -543,45 +188,39 @@ http://localhost:8080/v3/api-docs.yaml
 
 The documentation includes:
 
-1. Ticket CRUD endpoints
-2. Ticket filter endpoints
-3. Request DTO schemas
-4. Response DTO schemas
-5. Error response schemas
-6. HTTP status codes
-7. Query parameters
-8. Path parameters
+- Ticket CRUD endpoints
+- Filter endpoints
+- Request and response schemas
+- Error response schema
+- HTTP status codes
+- Path and query parameters
 
-## Database
+## Operational Readiness
 
-The application uses PostgreSQL as its relational database.
+The application uses Spring Boot Actuator for operational checks.
 
-Local development database configuration:
+Available endpoints:
 
-```properties
-spring.application.name=incident_ticket_api
-server.port=8080
-
-spring.datasource.url=jdbc:postgresql://localhost:5432/incident_ticket_db
-spring.datasource.username=incident_user
-spring.datasource.password=incident_password
-spring.datasource.driver-class-name=org.postgresql.Driver
-
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.format_sql=true
-
-springdoc.swagger-ui.path=/swagger-ui.html
-springdoc.api-docs.path=/v3/api-docs
-springdoc.swagger-ui.operationsSorter=method
-springdoc.swagger-ui.tagsSorter=alpha
+```text
+http://localhost:8080/actuator/health
+http://localhost:8080/actuator/info
+http://localhost:8080/actuator/metrics
+http://localhost:8080/actuator/health/liveness
+http://localhost:8080/actuator/health/readiness
+http://localhost:8080/livez
+http://localhost:8080/readyz
 ```
 
-The `tickets` table is generated from the `Ticket` JPA entity during local development.
+The health endpoint includes:
 
-## Start PostgreSQL Locally
+- Application health
+- Database health
+- Disk space health
+- Custom ticket repository health check
 
-For local development, PostgreSQL can be started with Docker:
+## Local Setup
+
+Start PostgreSQL with Docker:
 
 ```bash
 docker run --name incident-ticket-postgres \
@@ -592,39 +231,11 @@ docker run --name incident-ticket-postgres \
   -d postgres:16
 ```
 
-Check if the container is running:
-
-```bash
-docker ps
-```
-
 Start an existing PostgreSQL container:
 
 ```bash
 docker start incident-ticket-postgres
 ```
-
-Connect to the database:
-
-```bash
-docker exec -it incident-ticket-postgres psql -U incident_user -d incident_ticket_db
-```
-
-List tables:
-
-```sql
-\dt
-```
-
-Describe the `tickets` table:
-
-```sql
-\d tickets
-```
-
-## Local Start
-
-Make sure PostgreSQL is running before starting the application.
 
 Start the application:
 
@@ -644,130 +255,37 @@ The application runs on:
 http://localhost:8080
 ```
 
-## Health Check
+## Configuration
 
-```text
-http://localhost:8080/actuator/health
-```
+Local development configuration:
 
-Expected response:
+```properties
+spring.application.name=incident_ticket_api
+server.port=8080
 
-```json
-{
-  "status": "UP"
-}
-```
+spring.datasource.url=jdbc:postgresql://localhost:5432/incident_ticket_db
+spring.datasource.username=incident_user
+spring.datasource.password=incident_password
+spring.datasource.driver-class-name=org.postgresql.Driver
 
-## Test Endpoint
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
 
-```text
-http://localhost:8080/api/ping
-```
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.api-docs.path=/v3/api-docs
 
-Expected response:
+management.endpoints.web.exposure.include=health,info,metrics
+management.endpoint.health.show-details=always
+management.endpoint.health.show-components=always
+management.endpoint.health.probes.enabled=true
+management.endpoint.health.probes.add-additional-paths=true
 
-```text
-pong
-```
-
-## Manual API Testing
-
-### Create a ticket
-
-```bash
-curl -i -X POST http://localhost:8080/api/tickets \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Login not working",
-    "description": "A user cannot log in to the internal dashboard.",
-    "priority": "HIGH",
-    "assignedTo": "IT Support"
-  }'
-```
-
-### Get all tickets
-
-```bash
-curl -i http://localhost:8080/api/tickets
-```
-
-### Get one ticket by ID
-
-```bash
-curl -i http://localhost:8080/api/tickets/1
-```
-
-### Filter tickets by status
-
-```bash
-curl -i "http://localhost:8080/api/tickets?status=OPEN"
-```
-
-### Filter tickets by priority
-
-```bash
-curl -i "http://localhost:8080/api/tickets?priority=HIGH"
-```
-
-### Update a ticket
-
-```bash
-curl -i -X PUT http://localhost:8080/api/tickets/1 \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Updated title",
-    "description": "Updated description",
-    "priority": "MEDIUM",
-    "assignedTo": "Backend Team"
-  }'
-```
-
-### Update ticket status
-
-```bash
-curl -i -X PATCH http://localhost:8080/api/tickets/1/status \
-  -H "Content-Type: application/json" \
-  -d '{
-    "status": "IN_PROGRESS"
-  }'
-```
-
-### Delete a ticket
-
-```bash
-curl -i -X DELETE http://localhost:8080/api/tickets/1
-```
-
-### Test validation error
-
-```bash
-curl -i -X POST http://localhost:8080/api/tickets \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "",
-    "description": "A user cannot log in.",
-    "priority": "HIGH",
-    "assignedTo": "IT Support"
-  }'
-```
-
-### Test invalid enum value
-
-```bash
-curl -i -X POST http://localhost:8080/api/tickets \
-  -H "Content-Type: application/json" \
-  -d '{
-    "title": "Login not working",
-    "description": "A user cannot log in.",
-    "priority": "URGENT",
-    "assignedTo": "IT Support"
-  }'
-```
-
-### Test invalid query parameter
-
-```bash
-curl -i "http://localhost:8080/api/tickets?status=INVALID"
+management.info.env.enabled=true
+info.app.name=Incident Ticket API
+info.app.description=REST API for managing internal IT incident tickets
+info.app.version=1.0.0
+info.app.java.version=21
 ```
 
 ## Tests
@@ -784,26 +302,15 @@ On Windows PowerShell:
 .\mvnw.cmd test
 ```
 
-Currently implemented test categories:
+Implemented test areas:
 
-1. Repository tests
-2. DTO validation tests
-3. Mapper tests
-4. Service unit tests
-5. Controller tests
-6. Error handling tests
-
-Repository tests verify persistence operations and query methods.
-
-DTO validation tests verify request validation rules.
-
-Mapper tests verify conversion between entities and DTOs.
-
-Service unit tests verify business logic with a mocked repository.
-
-Controller tests verify request mappings, HTTP status codes, JSON responses, and request validation behavior with MockMvc.
-
-Error handling tests verify consistent JSON error responses for missing tickets, validation errors, invalid request bodies, and invalid query parameters.
+- Repository tests
+- DTO validation tests
+- Mapper tests
+- Service unit tests
+- Controller tests
+- Error handling tests
+- Health indicator tests
 
 ## Project Structure
 
@@ -815,31 +322,14 @@ src
         example
           incident_ticket_api
             config
-              OpenApiConfig.java
             controller
-              PingController.java
-              TicketController.java
             dto
-              CreateTicketRequest.java
-              TicketResponse.java
-              UpdateTicketRequest.java
-              UpdateTicketStatusRequest.java
             exception
-              ApiErrorResponse.java
-              FieldErrorResponse.java
-              GlobalExceptionHandler.java
-              TicketNotFoundException.java
+            health
             mapper
-              TicketMapper.java
             model
-              Ticket.java
-              TicketPriority.java
-              TicketStatus.java
             repository
-              TicketRepository.java
             service
-              TicketService.java
-            IncidentTicketApiApplication.java
     resources
       application.properties
   test
@@ -848,74 +338,22 @@ src
         example
           incident_ticket_api
             controller
-              TicketControllerTest.java
             dto
-              CreateTicketRequestValidationTest.java
-              UpdateTicketRequestValidationTest.java
-              UpdateTicketStatusRequestValidationTest.java
+            health
             mapper
-              TicketMapperTest.java
             repository
-              TicketRepositoryTest.java
             service
-              TicketServiceTest.java
-            IncidentTicketApiApplicationTests.java
 pom.xml
 README.md
 ```
 
-## Currently Implemented
-
-1. Basic Spring Boot application setup
-2. PostgreSQL connection
-3. Ticket JPA entity
-4. Ticket status enum
-5. Ticket priority enum
-6. Ticket repository
-7. Repository query methods
-8. Repository tests
-9. Request and response DTOs
-10. DTO validation rules
-11. Ticket mapper
-12. DTO validation tests
-13. Mapper tests
-14. Ticket service layer
-15. Ticket business logic
-16. Ticket REST controller
-17. Ticket CRUD endpoints
-18. Ticket filter endpoints
-19. Controller validation with `@Valid`
-20. Controller tests with MockMvc
-21. `TicketNotFoundException`
-22. Central exception handling
-23. Consistent JSON error responses
-24. Validation error response format
-25. Invalid request body handling
-26. Invalid query parameter handling
-27. Error handling tests
-28. OpenAPI documentation
-29. Swagger UI
-30. Documented API schemas
-31. Documented API error responses
-32. Health check endpoint
-33. Ping endpoint
-
-## Not Implemented Yet
-
-1. Dockerfile
-2. Docker Compose setup
-3. GitHub Actions CI pipeline
-4. Integration tests with full API flow
-5. Deployment configuration
-6. Final architecture diagram
-7. Demo screenshots
-
 ## Roadmap
 
-1. Improve operational readiness with Actuator and health checks.
-2. Add Dockerfile.
-3. Add Docker Compose setup for application and PostgreSQL.
-4. Add GitHub Actions CI pipeline.
-5. Add integration tests with full API flow.
-6. Add final architecture diagram and screenshots.
-7. Prepare final CV project description.
+Planned next steps:
+
+- Add Dockerfile
+- Add Docker Compose setup for application and PostgreSQL
+- Add GitHub Actions CI pipeline
+- Add full integration tests
+- Add final architecture diagram and screenshots
+- Prepare final CV project description

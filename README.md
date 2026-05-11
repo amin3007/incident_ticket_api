@@ -2,7 +2,7 @@
 
 A backend portfolio project for managing internal IT incident tickets through a REST API.
 
-The project demonstrates practical backend development with Spring Boot, PostgreSQL, layered architecture, validation, automated tests, centralized error handling, OpenAPI documentation, and operational health checks.
+The project demonstrates practical backend development with Spring Boot, PostgreSQL, layered architecture, validation, automated tests, centralized error handling, OpenAPI documentation, operational health checks, and Docker containerization.
 
 ## Tech Stack
 
@@ -16,6 +16,7 @@ The project demonstrates practical backend development with Spring Boot, Postgre
 - Jakarta Validation
 - Spring Boot Actuator
 - springdoc-openapi
+- Docker
 - JUnit, Mockito, AssertJ, MockMvc
 
 ## Current Features
@@ -28,6 +29,7 @@ The project demonstrates practical backend development with Spring Boot, Postgre
 - OpenAPI documentation with Swagger UI
 - Actuator health, info, metrics, liveness and readiness endpoints
 - Custom health indicator for the ticket repository
+- Dockerfile for containerized application startup
 - Automated tests for repository, DTO validation, mapper, service, controller and health indicator
 
 ## Architecture
@@ -237,7 +239,7 @@ Start an existing PostgreSQL container:
 docker start incident-ticket-postgres
 ```
 
-Start the application:
+Start the application locally:
 
 ```bash
 ./mvnw spring-boot:run
@@ -254,6 +256,62 @@ The application runs on:
 ```text
 http://localhost:8080
 ```
+
+## Docker
+
+Build the Docker image:
+
+```bash
+docker build -t incident-ticket-api:latest .
+```
+
+Run the API container:
+
+```bash
+docker run -d --name incident-ticket-api \
+  -p 8080:8080 \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/incident_ticket_db \
+  -e SPRING_DATASOURCE_USERNAME=incident_user \
+  -e SPRING_DATASOURCE_PASSWORD=incident_password \
+  incident-ticket-api:latest
+```
+
+On Windows PowerShell:
+
+```powershell
+docker run -d --name incident-ticket-api `
+  -p 8080:8080 `
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/incident_ticket_db `
+  -e SPRING_DATASOURCE_USERNAME=incident_user `
+  -e SPRING_DATASOURCE_PASSWORD=incident_password `
+  incident-ticket-api:latest
+```
+
+Check if the container is running:
+
+```bash
+docker ps
+```
+
+Check container logs:
+
+```bash
+docker logs incident-ticket-api
+```
+
+Check the health endpoint:
+
+```text
+http://localhost:8080/actuator/health
+```
+
+Stop and remove the API container:
+
+```bash
+docker rm -f incident-ticket-api
+```
+
+Note: This Dockerfile step runs the API container against the local PostgreSQL setup. A full multi-container setup with API and PostgreSQL will be added with Docker Compose in the next step.
 
 ## Configuration
 
@@ -343,6 +401,8 @@ src
             mapper
             repository
             service
+Dockerfile
+.dockerignore
 pom.xml
 README.md
 ```
@@ -351,7 +411,6 @@ README.md
 
 Planned next steps:
 
-- Add Dockerfile
 - Add Docker Compose setup for application and PostgreSQL
 - Add GitHub Actions CI pipeline
 - Add full integration tests

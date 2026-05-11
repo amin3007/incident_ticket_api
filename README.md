@@ -2,7 +2,7 @@
 
 A backend portfolio project for managing internal IT incident tickets through a REST API.
 
-The project demonstrates backend development with Spring Boot, PostgreSQL, layered architecture, validation, automated tests, centralized error handling, OpenAPI documentation, operational health checks, Docker, and Docker Compose.
+The project demonstrates backend development with Spring Boot, PostgreSQL, layered architecture, validation, automated tests, centralized error handling, OpenAPI documentation, operational health checks, Docker, Docker Compose, GitHub Actions CI, and full API integration testing.
 
 ## Tech Stack
 
@@ -18,6 +18,7 @@ The project demonstrates backend development with Spring Boot, PostgreSQL, layer
 - springdoc-openapi
 - Docker
 - Docker Compose
+- GitHub Actions
 - JUnit, Mockito, AssertJ, MockMvc
 
 ## Features
@@ -32,7 +33,9 @@ The project demonstrates backend development with Spring Boot, PostgreSQL, layer
 - Custom health indicator for the ticket repository
 - Dockerfile for containerized application startup
 - Docker Compose setup for API and PostgreSQL
-- Automated tests for repository, DTO validation, mapper, service, controller and health indicator
+- GitHub Actions CI pipeline for automated build, tests, Compose validation, and Docker image build
+- Full API integration test covering the complete ticket lifecycle
+- Automated tests for repository, DTO validation, mapper, service, controller, error handling, health indicator, and API integration
 
 ## Architecture
 
@@ -327,7 +330,13 @@ Docker Compose is the recommended local setup because it starts both the API and
 
 ## Local Maven Start
 
-Start PostgreSQL first, then run:
+Start PostgreSQL first:
+
+```bash
+docker compose up -d db
+```
+
+Then start the application:
 
 ```bash
 ./mvnw spring-boot:run
@@ -347,6 +356,14 @@ http://localhost:8080
 
 ## Tests
 
+Repository and integration tests require a running PostgreSQL database.
+
+Start PostgreSQL before running tests locally:
+
+```bash
+docker compose up -d db
+```
+
 Run all tests:
 
 ```bash
@@ -356,6 +373,7 @@ Run all tests:
 On Windows PowerShell:
 
 ```powershell
+docker compose up -d db
 .\mvnw.cmd test
 ```
 
@@ -368,6 +386,36 @@ Implemented test areas:
 - Controller tests
 - Error handling tests
 - Health indicator tests
+- Full API integration tests
+
+The full API integration test verifies a complete ticket lifecycle:
+
+1. Create ticket
+2. Read ticket by ID
+3. Update ticket
+4. Update ticket status
+5. Filter tickets
+6. Delete ticket
+7. Verify `404 Not Found` response after deletion
+
+## Continuous Integration
+
+The project uses GitHub Actions for continuous integration.
+
+The CI pipeline runs on pushes and pull requests and performs:
+
+- Java 21 setup
+- Maven dependency caching
+- PostgreSQL service container startup
+- Maven build and tests
+- Docker Compose configuration validation
+- Docker image build
+
+Workflow file:
+
+```text
+.github/workflows/ci.yml
+```
 
 ## Project Structure
 
@@ -397,9 +445,13 @@ src
             controller
             dto
             health
+            integration
             mapper
             repository
             service
+.github
+  workflows
+    ci.yml
 compose.yaml
 .env.example
 Dockerfile
@@ -412,7 +464,6 @@ README.md
 
 Planned next steps:
 
-- Add GitHub Actions CI pipeline
-- Add full integration tests
-- Add final architecture diagram and screenshots
+- Add final architecture diagram
+- Add screenshots of Swagger UI, GitHub Actions, and Docker Compose
 - Prepare final CV project description

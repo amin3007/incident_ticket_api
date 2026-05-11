@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16
+    container_name: incident-ticket-db
+    environment:
+      POSTGRES_DB: incident_ticket_db
+      POSTGRES_USER: incident_user
+      POSTGRES_PASSWORD: incident_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U incident_user -d incident_ticket_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  api:
+    build: .
+    image: incident-ticket-api:latest
+    container_name: incident-ticket-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/incident_ticket_db
+      SPRING_DATASOURCE_USERNAME: incident_user
+      SPRING_DATASOURCE_PASSWORD: incident_password
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:

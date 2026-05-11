@@ -2,7 +2,7 @@
 
 A backend portfolio project for managing internal IT incident tickets through a REST API.
 
-The project demonstrates practical backend development with Spring Boot, PostgreSQL, layered architecture, validation, automated tests, centralized error handling, OpenAPI documentation, operational health checks, and Docker containerization.
+The project demonstrates backend development with Spring Boot, PostgreSQL, layered architecture, validation, automated tests, centralized error handling, OpenAPI documentation, operational health checks, Docker, and Docker Compose.
 
 ## Tech Stack
 
@@ -17,9 +17,10 @@ The project demonstrates practical backend development with Spring Boot, Postgre
 - Spring Boot Actuator
 - springdoc-openapi
 - Docker
+- Docker Compose
 - JUnit, Mockito, AssertJ, MockMvc
 
-## Current Features
+## Features
 
 - REST API for incident ticket management
 - PostgreSQL persistence with JPA entity mapping
@@ -30,6 +31,7 @@ The project demonstrates practical backend development with Spring Boot, Postgre
 - Actuator health, info, metrics, liveness and readiness endpoints
 - Custom health indicator for the ticket repository
 - Dockerfile for containerized application startup
+- Docker Compose setup for API and PostgreSQL
 - Automated tests for repository, DTO validation, mapper, service, controller and health indicator
 
 ## Architecture
@@ -220,26 +222,112 @@ The health endpoint includes:
 - Disk space health
 - Custom ticket repository health check
 
-## Local Setup
+## Environment Configuration
 
-Start PostgreSQL with Docker:
+The repository contains an `.env.example` file with example values.
 
-```bash
-docker run --name incident-ticket-postgres \
-  -e POSTGRES_DB=incident_ticket_db \
-  -e POSTGRES_USER=incident_user \
-  -e POSTGRES_PASSWORD=incident_password \
-  -p 5432:5432 \
-  -d postgres:16
-```
-
-Start an existing PostgreSQL container:
+Create a local `.env` file from it:
 
 ```bash
-docker start incident-ticket-postgres
+cp .env.example .env
 ```
 
-Start the application locally:
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Example environment values:
+
+```properties
+POSTGRES_DB=incident_ticket_db
+POSTGRES_USER=incident_user
+POSTGRES_PASSWORD=incident_password
+
+SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/incident_ticket_db
+SPRING_DATASOURCE_USERNAME=incident_user
+SPRING_DATASOURCE_PASSWORD=incident_password
+```
+
+The local `.env` file should not be committed.
+
+## Docker Compose Setup
+
+Build and start the full local stack:
+
+```bash
+docker compose up --build
+```
+
+Run in detached mode:
+
+```bash
+docker compose up --build -d
+```
+
+Check running services:
+
+```bash
+docker compose ps
+```
+
+View logs:
+
+```bash
+docker compose logs api
+docker compose logs db
+```
+
+Stop the stack:
+
+```bash
+docker compose down
+```
+
+Stop the stack and remove the database volume:
+
+```bash
+docker compose down -v
+```
+
+The Compose setup starts:
+
+- Spring Boot API
+- PostgreSQL database
+- Persistent PostgreSQL volume
+- Internal Docker network
+
+The API connects to PostgreSQL through the Compose service name:
+
+```text
+db
+```
+
+## Docker Image
+
+Build the API image manually:
+
+```bash
+docker build -t incident-ticket-api:latest .
+```
+
+Run the API container manually against a local PostgreSQL setup:
+
+```bash
+docker run -d --name incident-ticket-api \
+  -p 8080:8080 \
+  -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/incident_ticket_db \
+  -e SPRING_DATASOURCE_USERNAME=incident_user \
+  -e SPRING_DATASOURCE_PASSWORD=incident_password \
+  incident-ticket-api:latest
+```
+
+Docker Compose is the recommended local setup because it starts both the API and PostgreSQL together.
+
+## Local Maven Start
+
+Start PostgreSQL first, then run:
 
 ```bash
 ./mvnw spring-boot:run
@@ -255,95 +343,6 @@ The application runs on:
 
 ```text
 http://localhost:8080
-```
-
-## Docker
-
-Build the Docker image:
-
-```bash
-docker build -t incident-ticket-api:latest .
-```
-
-Run the API container:
-
-```bash
-docker run -d --name incident-ticket-api \
-  -p 8080:8080 \
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/incident_ticket_db \
-  -e SPRING_DATASOURCE_USERNAME=incident_user \
-  -e SPRING_DATASOURCE_PASSWORD=incident_password \
-  incident-ticket-api:latest
-```
-
-On Windows PowerShell:
-
-```powershell
-docker run -d --name incident-ticket-api `
-  -p 8080:8080 `
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/incident_ticket_db `
-  -e SPRING_DATASOURCE_USERNAME=incident_user `
-  -e SPRING_DATASOURCE_PASSWORD=incident_password `
-  incident-ticket-api:latest
-```
-
-Check if the container is running:
-
-```bash
-docker ps
-```
-
-Check container logs:
-
-```bash
-docker logs incident-ticket-api
-```
-
-Check the health endpoint:
-
-```text
-http://localhost:8080/actuator/health
-```
-
-Stop and remove the API container:
-
-```bash
-docker rm -f incident-ticket-api
-```
-
-Note: This Dockerfile step runs the API container against the local PostgreSQL setup. A full multi-container setup with API and PostgreSQL will be added with Docker Compose in the next step.
-
-## Configuration
-
-Local development configuration:
-
-```properties
-spring.application.name=incident_ticket_api
-server.port=8080
-
-spring.datasource.url=jdbc:postgresql://localhost:5432/incident_ticket_db
-spring.datasource.username=incident_user
-spring.datasource.password=incident_password
-spring.datasource.driver-class-name=org.postgresql.Driver
-
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-spring.jpa.properties.hibernate.format_sql=true
-
-springdoc.swagger-ui.path=/swagger-ui.html
-springdoc.api-docs.path=/v3/api-docs
-
-management.endpoints.web.exposure.include=health,info,metrics
-management.endpoint.health.show-details=always
-management.endpoint.health.show-components=always
-management.endpoint.health.probes.enabled=true
-management.endpoint.health.probes.add-additional-paths=true
-
-management.info.env.enabled=true
-info.app.name=Incident Ticket API
-info.app.description=REST API for managing internal IT incident tickets
-info.app.version=1.0.0
-info.app.java.version=21
 ```
 
 ## Tests
@@ -401,6 +400,8 @@ src
             mapper
             repository
             service
+compose.yaml
+.env.example
 Dockerfile
 .dockerignore
 pom.xml
@@ -411,7 +412,6 @@ README.md
 
 Planned next steps:
 
-- Add Docker Compose setup for application and PostgreSQL
 - Add GitHub Actions CI pipeline
 - Add full integration tests
 - Add final architecture diagram and screenshots

@@ -20,11 +20,23 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.example.incident_ticket_api.exception.ApiErrorResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/api/tickets")
+@Tag(
+        name = "Tickets",
+        description = "Operations for managing internal IT incident tickets"
+)
 public class TicketController {
 
     private final TicketService ticketService;
@@ -33,6 +45,22 @@ public class TicketController {
         this.ticketService = ticketService;
     }
 
+    @Operation(
+            summary = "Create a new ticket",
+            description = "Creates a new internal IT incident ticket. New tickets start with status OPEN."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Ticket created successfully",
+                    content = @Content(schema = @Schema(implementation = TicketResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request body",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            )
+    })
     @PostMapping
     public ResponseEntity<TicketResponse> createTicket(
             @Valid @RequestBody CreateTicketRequest request
@@ -44,9 +72,27 @@ public class TicketController {
                 .body(createdTicket);
     }
 
+    @Operation(
+            summary = "Get tickets",
+            description = "Returns all tickets or filters tickets by status, priority, or both."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Tickets returned successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid query parameter",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            )
+    })
     @GetMapping
     public ResponseEntity<List<TicketResponse>> getTickets(
+            @Parameter(description = "Optional ticket status filter", example = "OPEN")
             @RequestParam(required = false) TicketStatus status,
+
+            @Parameter(description = "Optional ticket priority filter", example = "HIGH")
             @RequestParam(required = false) TicketPriority priority
     ) {
         List<TicketResponse> tickets;
@@ -64,8 +110,25 @@ public class TicketController {
         return ResponseEntity.ok(tickets);
     }
 
+    @Operation(
+            summary = "Get ticket by ID",
+            description = "Returns a single ticket by its ID."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Ticket returned successfully",
+                    content = @Content(schema = @Schema(implementation = TicketResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Ticket not found",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            )
+    })
     @GetMapping("/{id}")
     public ResponseEntity<TicketResponse> getTicketById(
+            @Parameter(description = "Ticket ID", example = "1")
             @PathVariable Long id
     ) {
         TicketResponse ticket = ticketService.getTicketById(id);
@@ -73,8 +136,30 @@ public class TicketController {
         return ResponseEntity.ok(ticket);
     }
 
+    @Operation(
+            summary = "Update ticket",
+            description = "Updates the editable fields of an existing ticket."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Ticket updated successfully",
+                    content = @Content(schema = @Schema(implementation = TicketResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request body",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Ticket not found",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            )
+    })
     @PutMapping("/{id}")
     public ResponseEntity<TicketResponse> updateTicket(
+            @Parameter(description = "Ticket ID", example = "1")
             @PathVariable Long id,
             @Valid @RequestBody UpdateTicketRequest request
     ) {
@@ -83,8 +168,30 @@ public class TicketController {
         return ResponseEntity.ok(updatedTicket);
     }
 
+    @Operation(
+            summary = "Update ticket status",
+            description = "Updates only the status of an existing ticket."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "Ticket status updated successfully",
+                    content = @Content(schema = @Schema(implementation = TicketResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Invalid request body",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Ticket not found",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            )
+    })
     @PatchMapping("/{id}/status")
     public ResponseEntity<TicketResponse> updateTicketStatus(
+            @Parameter(description = "Ticket ID", example = "1")
             @PathVariable Long id,
             @Valid @RequestBody UpdateTicketStatusRequest request
     ) {
@@ -93,8 +200,24 @@ public class TicketController {
         return ResponseEntity.ok(updatedTicket);
     }
 
+    @Operation(
+            summary = "Delete ticket",
+            description = "Deletes an existing ticket by its ID."
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "204",
+                    description = "Ticket deleted successfully"
+            ),
+            @ApiResponse(
+                    responseCode = "404",
+                    description = "Ticket not found",
+                    content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
+            )
+    })
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTicket(
+            @Parameter(description = "Ticket ID", example = "1")
             @PathVariable Long id
     ) {
         ticketService.deleteTicket(id);

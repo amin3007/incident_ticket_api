@@ -107,13 +107,13 @@ class CreateTicketRequestValidationTest {
 
     @Test
     void shouldRejectTooLongAssignedTo() {
-        String assignee = "A".repeat(121);
+        String assignedTo = "A".repeat(121);
 
         CreateTicketRequest request = new CreateTicketRequest(
                 "Login not working",
                 "A user cannot log in to the internal dashboard.",
                 TicketPriority.HIGH,
-                assignee
+                assignedTo
         );
 
         Set<ConstraintViolation<CreateTicketRequest>> violations = validator.validate(request);

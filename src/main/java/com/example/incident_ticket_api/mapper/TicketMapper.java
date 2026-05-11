@@ -29,8 +29,8 @@ public final class TicketMapper {
                 ticket.getId(),
                 ticket.getTitle(),
                 ticket.getDescription(),
-                ticket.getPriority(),
                 ticket.getStatus(),
+                ticket.getPriority(),
                 ticket.getAssignedTo(),
                 ticket.getCreatedAt(),
                 ticket.getUpdatedAt()

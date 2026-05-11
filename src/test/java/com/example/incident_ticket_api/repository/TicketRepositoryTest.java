@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * This test class verifies the functionality of the TicketRepository, which is responsible for managing Ticket entities in the database.
  * It uses Spring Boot's @DataJpaTest annotation to set up an in-memory database and test the repository methods.
- * The tests cover saving a ticket, finding tickets by various criteria (ID, status, priority, assignee), and deleting a ticket.
+ * The tests cover saving a ticket, finding tickets by various criteria (ID, status, priority, assignedTo), and deleting a ticket.
  */
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
@@ -115,7 +115,7 @@ class TicketRepositoryTest {
     }
 
     @Test
-    void shouldFindTicketsByAssignee() {
+    void shouldFindTicketsByAssignedTo() {
         Ticket ticket = new Ticket(
                 "VPN connection unstable",
                 "The VPN connection drops repeatedly.",

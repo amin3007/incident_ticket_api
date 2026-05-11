@@ -161,8 +161,8 @@ class TicketControllerTest {
                 1L,
                 "Updated title",
                 "Updated description",
-                TicketPriority.MEDIUM,
                 TicketStatus.OPEN,
+                TicketPriority.MEDIUM,
                 "Backend Team",
                 LocalDateTime.of(2026, 5, 4, 10, 0),
                 LocalDateTime.of(2026, 5, 4, 11, 0)
@@ -193,8 +193,8 @@ class TicketControllerTest {
                 1L,
                 "Login not working",
                 "A user cannot log in to the internal dashboard.",
-                TicketPriority.HIGH,
                 TicketStatus.IN_PROGRESS,
+                TicketPriority.HIGH,
                 "IT Support",
                 LocalDateTime.of(2026, 5, 4, 10, 0),
                 LocalDateTime.of(2026, 5, 4, 11, 0)
@@ -298,8 +298,8 @@ class TicketControllerTest {
                 1L,
                 "Login not working",
                 "A user cannot log in to the internal dashboard.",
-                TicketPriority.HIGH,
                 TicketStatus.OPEN,
+                TicketPriority.HIGH,
                 "IT Support",
                 LocalDateTime.of(2026, 5, 4, 10, 0),
                 LocalDateTime.of(2026, 5, 4, 10, 0)

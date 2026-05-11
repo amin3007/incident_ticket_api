@@ -4,15 +4,15 @@ A REST API for managing internal IT incident tickets.
 
 ## Project Goal
 
-This project demonstrates backend development with Spring Boot, PostgreSQL, validation, testing, Docker, OpenAPI documentation, and a CI pipeline.
+This project demonstrates backend development with Spring Boot, PostgreSQL, validation, testing, centralized error handling, OpenAPI documentation, Docker, and a CI pipeline.
 
 The application is designed as a portfolio project. It provides a REST API for creating, reading, updating, deleting, and filtering internal IT incident tickets.
 
 ## Current Status
 
-The basic Spring Boot setup is complete. The application is connected to a local PostgreSQL database. The initial ticket data model has been implemented as a JPA entity with status and priority enums. A Spring Data JPA repository has been added for persistence operations and query methods. Request and response DTOs have been added with validation rules for clean API input handling. A mapper has been implemented to convert between entities and DTOs. The service layer has been implemented to handle ticket business logic. A REST controller has been added to expose ticket operations over HTTP. Centralized exception handling has been implemented to provide consistent JSON error responses.
+The basic Spring Boot setup is complete. The application is connected to a local PostgreSQL database. The initial ticket data model has been implemented as a JPA entity with status and priority enums. A Spring Data JPA repository has been added for persistence operations and query methods. Request and response DTOs have been added with validation rules for clean API input handling. A mapper has been implemented to convert between entities and DTOs. The service layer has been implemented to handle ticket business logic. A REST controller has been added to expose ticket operations over HTTP. Centralized exception handling has been implemented to provide consistent JSON error responses. OpenAPI documentation and Swagger UI have been added to document and test the API in the browser.
 
-OpenAPI documentation, Swagger UI, Dockerfile, Docker Compose, GitHub Actions, and full integration tests are not implemented yet.
+Dockerfile, Docker Compose, GitHub Actions, full integration tests, and deployment configuration are not implemented yet.
 
 ## Tech Stack
 
@@ -43,19 +43,22 @@ OpenAPI documentation, Swagger UI, Dockerfile, Docker Compose, GitHub Actions, a
 9. Spring Boot Actuator  
    Used for technical health checks.
 
-10. JUnit  
+10. springdoc-openapi  
+    Used to generate OpenAPI documentation and Swagger UI.
+
+11. JUnit  
     Used for automated tests.
 
-11. Mockito  
+12. Mockito  
     Used for isolated service and controller tests with mocked dependencies.
 
-12. AssertJ  
+13. AssertJ  
     Used for readable test assertions.
 
-13. MockMvc  
+14. MockMvc  
     Used for testing Spring MVC controllers without starting a real server.
 
-14. GitHub  
+15. GitHub  
     Used for version control and project hosting.
 
 ## Architecture Overview
@@ -516,6 +519,39 @@ Expected status:
 400 Bad Request
 ```
 
+## OpenAPI Documentation
+
+The API is documented with OpenAPI and Swagger UI.
+
+Swagger UI is available at:
+
+```text
+http://localhost:8080/swagger-ui.html
+```
+
+The OpenAPI JSON description is available at:
+
+```text
+http://localhost:8080/v3/api-docs
+```
+
+The OpenAPI YAML description is available at:
+
+```text
+http://localhost:8080/v3/api-docs.yaml
+```
+
+The documentation includes:
+
+1. Ticket CRUD endpoints
+2. Ticket filter endpoints
+3. Request DTO schemas
+4. Response DTO schemas
+5. Error response schemas
+6. HTTP status codes
+7. Query parameters
+8. Path parameters
+
 ## Database
 
 The application uses PostgreSQL as its relational database.
@@ -534,6 +570,11 @@ spring.datasource.driver-class-name=org.postgresql.Driver
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
+
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.api-docs.path=/v3/api-docs
+springdoc.swagger-ui.operationsSorter=method
+springdoc.swagger-ui.tagsSorter=alpha
 ```
 
 The `tickets` table is generated from the `Ticket` JPA entity during local development.
@@ -773,6 +814,8 @@ src
       com
         example
           incident_ticket_api
+            config
+              OpenApiConfig.java
             controller
               PingController.java
               TicketController.java
@@ -850,24 +893,26 @@ README.md
 25. Invalid request body handling
 26. Invalid query parameter handling
 27. Error handling tests
-28. Health check endpoint
-29. Ping endpoint
+28. OpenAPI documentation
+29. Swagger UI
+30. Documented API schemas
+31. Documented API error responses
+32. Health check endpoint
+33. Ping endpoint
 
 ## Not Implemented Yet
 
-1. OpenAPI documentation
-2. Swagger UI
-3. Dockerfile
-4. Docker Compose setup
-5. GitHub Actions CI pipeline
-6. Integration tests with full API flow
-7. Deployment configuration
-8. Final architecture diagram
-9. Demo screenshots
+1. Dockerfile
+2. Docker Compose setup
+3. GitHub Actions CI pipeline
+4. Integration tests with full API flow
+5. Deployment configuration
+6. Final architecture diagram
+7. Demo screenshots
 
 ## Roadmap
 
-1. Add OpenAPI documentation with Swagger UI.
+1. Improve operational readiness with Actuator and health checks.
 2. Add Dockerfile.
 3. Add Docker Compose setup for application and PostgreSQL.
 4. Add GitHub Actions CI pipeline.

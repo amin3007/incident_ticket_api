@@ -2,7 +2,7 @@
 
 A backend portfolio project for managing internal IT incident tickets through a REST API.
 
-The project demonstrates backend development with Spring Boot, PostgreSQL, layered architecture, validation, automated tests, centralized error handling, OpenAPI documentation, operational health checks, Docker, Docker Compose, GitHub Actions CI, and full API integration testing.
+The project demonstrates practical backend development with Spring Boot, PostgreSQL, layered architecture, validation, automated tests, centralized error handling, OpenAPI documentation, operational health checks, Docker, Docker Compose, GitHub Actions CI, and full API integration testing.
 
 ## Tech Stack
 
@@ -21,11 +21,11 @@ The project demonstrates backend development with Spring Boot, PostgreSQL, layer
 - GitHub Actions
 - JUnit, Mockito, AssertJ, MockMvc
 
-## Features
+## Key Features
 
 - REST API for incident ticket management
 - PostgreSQL persistence with JPA entity mapping
-- Layered architecture: Controller, Service, Repository, DTOs, Mapper
+- Layered backend architecture: Controller, Service, Repository, DTOs, Mapper
 - Request validation with Jakarta Validation
 - Centralized JSON error handling
 - OpenAPI documentation with Swagger UI
@@ -33,22 +33,55 @@ The project demonstrates backend development with Spring Boot, PostgreSQL, layer
 - Custom health indicator for the ticket repository
 - Dockerfile for containerized application startup
 - Docker Compose setup for API and PostgreSQL
-- GitHub Actions CI pipeline for automated build, tests, Compose validation, and Docker image build
+- GitHub Actions CI pipeline for build, tests, Compose validation and Docker image build
 - Full API integration test covering the complete ticket lifecycle
-- Automated tests for repository, DTO validation, mapper, service, controller, error handling, health indicator, and API integration
+
+## Screenshots
+
+### Swagger UI
+
+![Swagger UI](docs/screenshots/swagger_ui_1.png)
+![Swagger UI](docs/screenshots/swagger_ui_2.png)
+
+### GitHub Actions CI
+
+![GitHub Actions CI](docs/screenshots/ci.png)
+
+### Docker Compose Runtime
+
+![Docker Compose Runtime](docs/screenshots/docker_compose.png)
 
 ## Architecture
 
 ```text
-Client
-  ↓
+Client / Swagger UI / API Consumer
+        |
+        v
 TicketController
-  ↓
+        |
+        v
 TicketService
-  ↓
+        |
+        v
 TicketRepository
-  ↓
+        |
+        v
 PostgreSQL
+```
+
+Runtime with Docker Compose:
+
+```text
+Docker Compose
+  |
+  |-- api service
+  |     Spring Boot application
+  |     Port: 8080
+  |
+  |-- db service
+        PostgreSQL
+        Port: 5432
+        Volume: postgres_data
 ```
 
 Main package:
@@ -60,8 +93,6 @@ com.example.incident_ticket_api
 ## Data Model
 
 The central entity is `Ticket`.
-
-Fields:
 
 ```text
 id
@@ -193,20 +224,9 @@ OpenAPI YAML:
 http://localhost:8080/v3/api-docs.yaml
 ```
 
-The documentation includes:
-
-- Ticket CRUD endpoints
-- Filter endpoints
-- Request and response schemas
-- Error response schema
-- HTTP status codes
-- Path and query parameters
-
-## Operational Readiness
+## Operational Endpoints
 
 The application uses Spring Boot Actuator for operational checks.
-
-Available endpoints:
 
 ```text
 http://localhost:8080/actuator/health
@@ -218,18 +238,11 @@ http://localhost:8080/livez
 http://localhost:8080/readyz
 ```
 
-The health endpoint includes:
-
-- Application health
-- Database health
-- Disk space health
-- Custom ticket repository health check
+The health endpoint includes application health, database health, disk space health and a custom ticket repository health check.
 
 ## Environment Configuration
 
-The repository contains an `.env.example` file with example values.
-
-Create a local `.env` file from it:
+Create a local `.env` file from the example file:
 
 ```bash
 cp .env.example .env
@@ -241,7 +254,7 @@ On Windows PowerShell:
 Copy-Item .env.example .env
 ```
 
-Example environment values:
+Example values:
 
 ```properties
 POSTGRES_DB=incident_ticket_db
@@ -255,7 +268,7 @@ SPRING_DATASOURCE_PASSWORD=incident_password
 
 The local `.env` file should not be committed.
 
-## Docker Compose Setup
+## Run with Docker Compose
 
 Build and start the full local stack:
 
@@ -294,7 +307,7 @@ Stop the stack and remove the database volume:
 docker compose down -v
 ```
 
-The Compose setup starts:
+Docker Compose starts:
 
 - Spring Boot API
 - PostgreSQL database
@@ -307,28 +320,7 @@ The API connects to PostgreSQL through the Compose service name:
 db
 ```
 
-## Docker Image
-
-Build the API image manually:
-
-```bash
-docker build -t incident-ticket-api:latest .
-```
-
-Run the API container manually against a local PostgreSQL setup:
-
-```bash
-docker run -d --name incident-ticket-api \
-  -p 8080:8080 \
-  -e SPRING_DATASOURCE_URL=jdbc:postgresql://host.docker.internal:5432/incident_ticket_db \
-  -e SPRING_DATASOURCE_USERNAME=incident_user \
-  -e SPRING_DATASOURCE_PASSWORD=incident_password \
-  incident-ticket-api:latest
-```
-
-Docker Compose is the recommended local setup because it starts both the API and PostgreSQL together.
-
-## Local Maven Start
+## Run Locally with Maven
 
 Start PostgreSQL first:
 
@@ -388,7 +380,7 @@ Implemented test areas:
 - Health indicator tests
 - Full API integration tests
 
-The full API integration test verifies a complete ticket lifecycle:
+The full API integration test verifies:
 
 1. Create ticket
 2. Read ticket by ID
@@ -402,7 +394,7 @@ The full API integration test verifies a complete ticket lifecycle:
 
 The project uses GitHub Actions for continuous integration.
 
-The CI pipeline runs on pushes and pull requests and performs:
+The CI pipeline performs:
 
 - Java 21 setup
 - Maven dependency caching
@@ -452,6 +444,14 @@ src
 .github
   workflows
     ci.yml
+docs
+  diagrams
+    architecture.md
+  screenshots
+    swagger-ui.png
+    github-actions-ci.png
+    docker-compose.png
+    actuator-health.png
 compose.yaml
 .env.example
 Dockerfile
@@ -460,10 +460,24 @@ pom.xml
 README.md
 ```
 
-## Roadmap
+## Project Status
 
-Planned next steps:
+Implemented:
 
-- Add final architecture diagram
-- Add screenshots of Swagger UI, GitHub Actions, and Docker Compose
-- Prepare final CV project description
+- REST API
+- PostgreSQL persistence
+- Validation
+- Centralized error handling
+- OpenAPI and Swagger UI
+- Actuator health checks
+- Dockerfile
+- Docker Compose
+- GitHub Actions CI
+- Full API integration tests
+
+Potential next steps:
+
+- Add authentication and role-based access control
+- Add pagination and sorting
+- Add database migration tool such as Flyway or Liquibase
+- Add frontend dashboard

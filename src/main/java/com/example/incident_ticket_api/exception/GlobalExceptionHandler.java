@@ -12,9 +12,15 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Converts expected application and validation failures into one consistent JSON error shape.
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Returns 404 when the service layer cannot find the requested ticket.
+     */
     @ExceptionHandler(TicketNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleTicketNotFoundException(
             TicketNotFoundException exception,
@@ -32,6 +38,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
     }
 
+    /**
+     * Collects Bean Validation errors so clients know exactly which fields failed.
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiErrorResponse> handleValidationException(
             MethodArgumentNotValidException exception,
@@ -58,6 +67,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 
+    /**
+     * Handles malformed JSON and invalid enum values in request bodies before controller methods run.
+     */
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiErrorResponse> handleHttpMessageNotReadableException(
             HttpMessageNotReadableException exception,
@@ -75,6 +87,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 
+    /**
+     * Handles invalid query or path parameter values, such as an unknown TicketStatus.
+     */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiErrorResponse> handleMethodArgumentTypeMismatchException(
             MethodArgumentTypeMismatchException exception,
@@ -94,6 +109,9 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(response);
     }
 
+    /**
+     * Last-resort handler that hides internal exception details while still returning a traceable response.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGenericException(
             Exception exception,

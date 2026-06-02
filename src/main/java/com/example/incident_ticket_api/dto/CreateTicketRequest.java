@@ -6,6 +6,10 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import io.swagger.v3.oas.annotations.media.Schema;
 
+/**
+ * Request body for creating a ticket.
+ * Validation annotations keep invalid input out of the service layer.
+ */
 public record CreateTicketRequest(
 
         @Schema(description = "Short ticket title", example = "Login not working")

@@ -20,6 +20,9 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * Full application tests that exercise controller, service, repository, validation, and exception handling together.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 class TicketApiIntegrationTest {
@@ -35,6 +38,7 @@ class TicketApiIntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
+        // Each integration test starts from a known state so generated ids and counts do not leak across tests.
         ticketRepository.deleteAll();
     }
 

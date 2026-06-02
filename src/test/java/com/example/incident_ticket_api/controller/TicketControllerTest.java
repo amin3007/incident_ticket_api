@@ -35,6 +35,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+/**
+ * Controller tests for HTTP routing, validation, and error responses.
+ * Standalone MockMvc keeps the slice small while still exercising controller advice.
+ */
 class TicketControllerTest {
 
     private TicketService ticketService;
@@ -45,6 +49,7 @@ class TicketControllerTest {
     void setUp() {
         ticketService = mock(TicketService.class);
 
+        // Standalone MockMvc needs an explicit validator to enforce @Valid DTO annotations.
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
 

@@ -16,8 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Service class for managing tickets. It provides methods for creating, retrieving, updating, and deleting tickets,
- * as well as filtering tickets by status and priority.
+ * Business layer for ticket use cases.
+ * Transactions live here so controllers stay thin and repository calls remain consistent.
  */
 @Service
 public class TicketService {
@@ -28,6 +28,9 @@ public class TicketService {
         this.ticketRepository = ticketRepository;
     }
 
+    /**
+     * Creates a ticket through the mapper so default entity behavior and response shaping stay centralized.
+     */
     @Transactional
     public TicketResponse createTicket(CreateTicketRequest request) {
         Ticket ticket = TicketMapper.toEntity(request);
@@ -36,6 +39,9 @@ public class TicketService {
         return TicketMapper.toResponse(savedTicket);
     }
 
+    /**
+     * Reads every ticket and maps entities to DTOs before returning them to the web layer.
+     */
     @Transactional(readOnly = true)
     public List<TicketResponse> getAllTickets() {
         List<Ticket> tickets = ticketRepository.findAll();
@@ -43,6 +49,9 @@ public class TicketService {
         return TicketMapper.toResponseList(tickets);
     }
 
+    /**
+     * Reuses the private lookup helper so missing-ticket behavior is identical across use cases.
+     */
     @Transactional(readOnly = true)
     public TicketResponse getTicketById(Long id) {
         Ticket ticket = findTicketEntityById(id);
@@ -50,6 +59,9 @@ public class TicketService {
         return TicketMapper.toResponse(ticket);
     }
 
+    /**
+     * Performs a full edit of the mutable ticket fields while preserving workflow status.
+     */
     @Transactional
     public TicketResponse updateTicket(Long id, UpdateTicketRequest request) {
         Ticket ticket = findTicketEntityById(id);
@@ -61,6 +73,9 @@ public class TicketService {
         return TicketMapper.toResponse(savedTicket);
     }
 
+    /**
+     * Changes only the workflow status, which keeps status transitions separate from content edits.
+     */
     @Transactional
     public TicketResponse updateTicketStatus(Long id, UpdateTicketStatusRequest request) {
         Ticket ticket = findTicketEntityById(id);
@@ -72,6 +87,9 @@ public class TicketService {
         return TicketMapper.toResponse(savedTicket);
     }
 
+    /**
+     * Deletes the loaded entity so a missing id still produces the same not-found exception.
+     */
     @Transactional
     public void deleteTicket(Long id) {
         Ticket ticket = findTicketEntityById(id);
@@ -79,6 +97,9 @@ public class TicketService {
         ticketRepository.delete(ticket);
     }
 
+    /**
+     * Filters by status through a derived Spring Data query method.
+     */
     @Transactional(readOnly = true)
     public List<TicketResponse> findByStatus(TicketStatus status) {
         List<Ticket> tickets = ticketRepository.findByStatus(status);
@@ -86,6 +107,9 @@ public class TicketService {
         return TicketMapper.toResponseList(tickets);
     }
 
+    /**
+     * Filters by priority through a derived Spring Data query method.
+     */
     @Transactional(readOnly = true)
     public List<TicketResponse> findByPriority(TicketPriority priority) {
         List<Ticket> tickets = ticketRepository.findByPriority(priority);
@@ -93,6 +117,9 @@ public class TicketService {
         return TicketMapper.toResponseList(tickets);
     }
 
+    /**
+     * Uses the combined query when both filters are present to avoid filtering in memory.
+     */
     @Transactional(readOnly = true)
     public List<TicketResponse> findByStatusAndPriority(TicketStatus status, TicketPriority priority) {
         List<Ticket> tickets = ticketRepository.findByStatusAndPriority(status, priority);
@@ -100,6 +127,9 @@ public class TicketService {
         return TicketMapper.toResponseList(tickets);
     }
 
+    /**
+     * Centralizes id lookup and translates empty Optional values into the API's domain exception.
+     */
     private Ticket findTicketEntityById(Long id) {
         return ticketRepository.findById(id)
                 .orElseThrow(() -> new TicketNotFoundException(id));

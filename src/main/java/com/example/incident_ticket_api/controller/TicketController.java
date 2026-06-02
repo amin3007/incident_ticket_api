@@ -31,6 +31,10 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import java.util.List;
 
+/**
+ * HTTP layer for ticket operations.
+ * The controller keeps request/response concerns here and delegates business rules to TicketService.
+ */
 @RestController
 @RequestMapping("/api/tickets")
 @Tag(
@@ -97,6 +101,7 @@ public class TicketController {
     ) {
         List<TicketResponse> tickets;
 
+        // Route to the narrowest repository query available so filtering stays in the database.
         if (status != null && priority != null) {
             tickets = ticketService.findByStatusAndPriority(status, priority);
         } else if (status != null) {

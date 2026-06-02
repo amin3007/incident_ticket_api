@@ -5,6 +5,9 @@ import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
 
+/**
+ * Custom Actuator health check that verifies the ticket repository can reach the database.
+ */
 @Component
 public class TicketRepositoryHealthIndicator implements HealthIndicator {
 
@@ -14,6 +17,9 @@ public class TicketRepositoryHealthIndicator implements HealthIndicator {
         this.ticketRepository = ticketRepository;
     }
 
+    /**
+     * Uses a cheap count query as a real database signal and reports only safe diagnostic details.
+     */
     @Override
     public Health health() {
         try {

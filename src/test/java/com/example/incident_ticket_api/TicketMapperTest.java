@@ -10,6 +10,9 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Unit tests for mapping code so DTO/entity conversion can change safely without web or database setup.
+ */
 class TicketMapperTest {
 
     @Test

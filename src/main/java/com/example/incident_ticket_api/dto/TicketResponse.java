@@ -6,6 +6,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
+/**
+ * Public ticket representation returned by the API.
+ * Exposing a DTO instead of the JPA entity keeps persistence details out of HTTP responses.
+ */
 public record TicketResponse(
 
         @Schema(description = "Unique ticket ID", example = "1")

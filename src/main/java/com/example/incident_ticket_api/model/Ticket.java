@@ -8,19 +8,22 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 
 import java.time.LocalDateTime;
 
-@Entity //indicates that this class is a JPA entity, which means it will be mapped to a database table
-@Table(name = "tickets") //specifies the name of the database table that this entity will be mapped to
-public class Ticket{
-    @Id //indicates that this field is the primary key of the entity
-    @GeneratedValue(strategy = GenerationType.IDENTITY) //specifies that the value of this field will be generated automatically by the database, using an auto-incrementing strategy
+/**
+ * JPA entity for an incident ticket stored in the tickets table.
+ * The entity owns persistence defaults such as OPEN status and creation timestamps.
+ */
+@Entity
+@Table(name = "tickets")
+public class Ticket {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 120) //specifies that this column cannot be null and has a maximum length of 120 characters
+    @Column(nullable = false, length = 120)
     private String title;
 
     @Column(nullable = false, columnDefinition = "TEXT")
@@ -43,14 +46,16 @@ public class Ticket{
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    /** The default constructor is required by JPA to create instances of the entity.
-     *  It is protected to prevent direct instantiation of the Ticket class without using the constructor that takes parameters.
+    /**
+     * Required by JPA for entity creation.
+     * Protected visibility nudges application code toward the meaningful constructors below.
      */
-    protected Ticket(){
+    protected Ticket() {
     }
 
-    /** This constructor allows you to create a new Ticket instance with the specified title, description, status, priority, and assignedTo values.
-     *  The createdAt and updatedAt fields will be automatically set when the entity is persisted to the database.
+    /**
+     * Creates a ticket with an explicit status, which is useful for tests and controlled workflow changes.
+     * Timestamps are assigned by JPA callbacks when the entity is persisted.
      */
     public Ticket(String title, String description, TicketStatus status, TicketPriority priority, String assignedTo) {
         this.title = title;
@@ -60,19 +65,24 @@ public class Ticket{
         this.assignedTo = assignedTo;
     }
 
-    /** This constructor allows you to create a new Ticket instance with the specified title, description, priority, and assignedTo values.
-     * The status will be set to OPEN by default, and the createdAt and updatedAt fields will be automatically set when the entity is persisted to the database.
+    /**
+     * Main constructor for new tickets.
+     * New incidents begin as OPEN by default to keep create requests simple.
      */
     public Ticket(String title, String description, TicketPriority priority, String assignedTo) {
         this(title, description, TicketStatus.OPEN, priority, assignedTo);
     }
 
+    /**
+     * Initializes audit fields just before the first database insert.
+     * It also protects against a null status if a constructor or test bypasses the default.
+     */
     @PrePersist
     void onCreate() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
 
-        if(this.status == null) {
+        if (this.status == null) {
             this.status = TicketStatus.OPEN;
         }
     }

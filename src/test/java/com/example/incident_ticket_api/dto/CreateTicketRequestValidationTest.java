@@ -13,6 +13,10 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Direct Bean Validation tests for create requests.
+ * Testing DTO rules here keeps validation expectations clear outside controller tests.
+ */
 class CreateTicketRequestValidationTest {
 
     private static ValidatorFactory validatorFactory;

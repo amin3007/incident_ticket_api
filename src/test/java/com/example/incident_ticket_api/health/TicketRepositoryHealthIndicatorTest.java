@@ -9,6 +9,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+/**
+ * Unit tests for the custom health indicator's up/down decisions.
+ */
 class TicketRepositoryHealthIndicatorTest {
 
     @Test

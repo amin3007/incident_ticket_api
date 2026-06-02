@@ -13,6 +13,9 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+/**
+ * Direct Bean Validation tests for full ticket update requests.
+ */
 class UpdateTicketRequestValidationTest {
 
     private static ValidatorFactory validatorFactory;

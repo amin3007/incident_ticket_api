@@ -23,6 +23,10 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+/**
+ * Service unit tests with a mocked repository.
+ * This keeps business logic checks fast and independent of Spring MVC or database wiring.
+ */
 class TicketServiceTest {
 
     private TicketRepository ticketRepository;
@@ -270,6 +274,9 @@ class TicketServiceTest {
         );
     }
 
+    /**
+     * Assigns ids without saving through JPA so service tests can focus on service behavior.
+     */
     private Ticket createTicketWithId(
             Long id,
             String title,

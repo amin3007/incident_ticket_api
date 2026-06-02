@@ -5,6 +5,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Standard error payload returned by the global exception handler.
+ * Records keep this DTO immutable and make the response contract easy to scan.
+ */
 public record ApiErrorResponse(
 
         @Schema(description = "Error timestamp", example = "2026-05-09T12:30:00")

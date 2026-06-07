@@ -1,6 +1,7 @@
 package com.example.incident_ticket_api.service;
 
 import com.example.incident_ticket_api.dto.CreateTicketRequest;
+import com.example.incident_ticket_api.dto.PagedResponse;
 import com.example.incident_ticket_api.dto.TicketResponse;
 import com.example.incident_ticket_api.dto.UpdateTicketRequest;
 import com.example.incident_ticket_api.dto.UpdateTicketStatusRequest;
@@ -10,6 +11,9 @@ import com.example.incident_ticket_api.model.Ticket;
 import com.example.incident_ticket_api.model.TicketPriority;
 import com.example.incident_ticket_api.model.TicketStatus;
 import com.example.incident_ticket_api.repository.TicketRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -125,6 +129,57 @@ public class TicketService {
         List<Ticket> tickets = ticketRepository.findByStatusAndPriority(status, priority);
 
         return TicketMapper.toResponseList(tickets);
+    }
+
+    /**
+     * Searches tickets with optional filters and pageable sorting.
+     * Specifications keep the query flexible without adding repository methods for every filter combination.
+     */
+    @Transactional(readOnly = true)
+    public PagedResponse<TicketResponse> searchTickets(
+            TicketStatus status,
+            TicketPriority priority,
+            String assignee,
+            Pageable pageable
+    ) {
+        Specification<Ticket> specification = Specification.<Ticket>unrestricted()
+                .and(hasStatus(status))
+                .and(hasPriority(priority))
+                .and(hasAssignee(assignee));
+
+        Page<TicketResponse> page = ticketRepository.findAll(specification, pageable)
+                .map(TicketMapper::toResponse);
+
+        return PagedResponse.from(page);
+    }
+
+    /**
+     * Adds a status predicate only when the caller provided a status filter.
+     */
+    private Specification<Ticket> hasStatus(TicketStatus status) {
+        return (root, query, criteriaBuilder) ->
+                status == null ? null : criteriaBuilder.equal(root.get("status"), status);
+    }
+
+    /**
+     * Adds a priority predicate only when the caller provided a priority filter.
+     */
+    private Specification<Ticket> hasPriority(TicketPriority priority) {
+        return (root, query, criteriaBuilder) ->
+                priority == null ? null : criteriaBuilder.equal(root.get("priority"), priority);
+    }
+
+    /**
+     * Performs a case-insensitive partial match for assignee searches.
+     */
+    private Specification<Ticket> hasAssignee(String assignee) {
+        return (root, query, criteriaBuilder) ->
+                assignee == null || assignee.isBlank()
+                        ? null
+                        : criteriaBuilder.like(
+                                criteriaBuilder.lower(root.get("assignedTo")),
+                                "%" + assignee.toLowerCase() + "%"
+                        );
     }
 
     /**

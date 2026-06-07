@@ -4,14 +4,15 @@ import com.example.incident_ticket_api.model.Ticket;
 import com.example.incident_ticket_api.model.TicketPriority;
 import com.example.incident_ticket_api.model.TicketStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import java.util.List;
 
 /**
  * Spring Data JPA repository for Ticket persistence.
- * Derived method names keep simple filters declarative without handwritten SQL.
+ * Derived method names cover simple lookups, while JpaSpecificationExecutor supports dynamic search filters.
  */
-public interface TicketRepository extends JpaRepository<Ticket, Long> {
+public interface TicketRepository extends JpaRepository<Ticket, Long>, JpaSpecificationExecutor<Ticket> {
 
     /**
      * Finds tickets in one workflow state, such as OPEN or RESOLVED.

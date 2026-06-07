@@ -109,9 +109,11 @@ class TicketApiIntegrationTest {
                         .param("status", "IN_PROGRESS")
                         .param("priority", "MEDIUM"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(ticketId))
-                .andExpect(jsonPath("$[0].status").value("IN_PROGRESS"))
-                .andExpect(jsonPath("$[0].priority").value("MEDIUM"));
+                .andExpect(jsonPath("$.content[0].id").value(ticketId))
+                .andExpect(jsonPath("$.content[0].status").value("IN_PROGRESS"))
+                .andExpect(jsonPath("$.content[0].priority").value("MEDIUM"))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.totalElements").value(1));
 
         mockMvc.perform(delete("/api/tickets/{id}", ticketId))
                 .andExpect(status().isNoContent());

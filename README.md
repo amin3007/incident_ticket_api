@@ -24,6 +24,7 @@ The project demonstrates practical backend development with Spring Boot, Postgre
 ## Key Features
 
 - REST API for incident ticket management
+- Paginated ticket search with filtering and sorting
 - PostgreSQL persistence with JPA entity mapping
 - Layered backend architecture: Controller, Service, Repository, DTOs, Mapper
 - Request validation with Jakarta Validation
@@ -140,9 +141,12 @@ DELETE /api/tickets/{id}
 GET    /api/tickets?status=OPEN
 GET    /api/tickets?priority=HIGH
 GET    /api/tickets?status=OPEN&priority=HIGH
+GET    /api/tickets?assignee=Support
+GET    /api/tickets?page=0&size=20
+GET    /api/tickets?sort=createdAt,desc
 ```
 
-## Example Request
+## Example Create Request
 
 ```http
 POST /api/tickets
@@ -158,7 +162,7 @@ Content-Type: application/json
 }
 ```
 
-## Example Response
+## Example Create Response
 
 ```json
 {
@@ -173,6 +177,49 @@ Content-Type: application/json
 }
 ```
 
+## Example Search Request
+
+```http
+GET /api/tickets?status=OPEN&priority=HIGH&page=0&size=20&sort=createdAt,desc
+```
+
+The list endpoint returns a paginated response. Ticket data is stored in `content`; pagination metadata is returned next to it.
+
+```json
+{
+  "content": [
+    {
+      "id": 1,
+      "title": "Login not working",
+      "description": "A user cannot log in to the internal dashboard.",
+      "status": "OPEN",
+      "priority": "HIGH",
+      "assignedTo": "IT Support",
+      "createdAt": "2026-05-09T10:00:00",
+      "updatedAt": "2026-05-09T10:00:00"
+    }
+  ],
+  "page": 0,
+  "size": 20,
+  "totalElements": 1,
+  "totalPages": 1,
+  "first": true,
+  "last": true,
+  "sort": [
+    "createdAt,desc"
+  ]
+}
+```
+
+Supported query parameters:
+
+- `status`: filters by ticket status, for example `OPEN`
+- `priority`: filters by ticket priority, for example `HIGH`
+- `assignee`: performs a case-insensitive partial match against `assignedTo`
+- `page`: zero-based page index
+- `size`: number of tickets per page
+- `sort`: sort field and direction, for example `createdAt,desc`
+
 ## Error Handling
 
 The API uses centralized error handling with `GlobalExceptionHandler`.
@@ -184,6 +231,7 @@ Handled error cases:
 - Malformed JSON returns `400 Bad Request`
 - Invalid enum values return `400 Bad Request`
 - Invalid query parameters return `400 Bad Request`
+- Invalid sort fields return `400 Bad Request`
 - Unexpected internal errors return `500 Internal Server Error`
 
 Example error response:
@@ -386,9 +434,18 @@ The full API integration test verifies:
 2. Read ticket by ID
 3. Update ticket
 4. Update ticket status
-5. Filter tickets
+5. Filter tickets through the paginated search endpoint
 6. Delete ticket
 7. Verify `404 Not Found` response after deletion
+
+Controller tests also verify that `GET /api/tickets` returns the new paginated response structure under `content`.
+
+## Design Decisions
+
+- The list endpoint uses Spring Data `Pageable` for pagination and sorting because it is the standard Spring mechanism for this problem.
+- Dynamic filters are implemented with JPA `Specification` so the API can combine optional filters without creating a repository method for every possible combination.
+- The API returns a custom `PagedResponse` DTO instead of exposing Spring Data's `Page` directly. This keeps the HTTP response stable and easier to understand for clients.
+- Invalid sort fields are handled by the global exception handler so clients receive a clean `400 Bad Request` response instead of an internal server error.
 
 ## Continuous Integration
 
@@ -465,6 +522,7 @@ README.md
 Implemented:
 
 - REST API
+- Paginated, filterable and sortable ticket search
 - PostgreSQL persistence
 - Validation
 - Centralized error handling
@@ -478,6 +536,7 @@ Implemented:
 Potential next steps:
 
 - Add authentication and role-based access control
-- Add pagination and sorting
+- Add ticket lifecycle business rules
+- Add Testcontainers for PostgreSQL integration tests
 - Add database migration tool such as Flyway or Liquibase
 - Add frontend dashboard

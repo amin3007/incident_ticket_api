@@ -1,13 +1,26 @@
 package com.example.incident_ticket_api.controller;
 
 import com.example.incident_ticket_api.dto.CreateTicketRequest;
+import com.example.incident_ticket_api.dto.PagedResponse;
 import com.example.incident_ticket_api.dto.TicketResponse;
 import com.example.incident_ticket_api.dto.UpdateTicketRequest;
 import com.example.incident_ticket_api.dto.UpdateTicketStatusRequest;
+import com.example.incident_ticket_api.exception.ApiErrorResponse;
 import com.example.incident_ticket_api.model.TicketPriority;
 import com.example.incident_ticket_api.model.TicketStatus;
 import com.example.incident_ticket_api.service.TicketService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.data.web.SortDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,16 +33,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import com.example.incident_ticket_api.exception.ApiErrorResponse;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
-import io.swagger.v3.oas.annotations.tags.Tag;
-
-import java.util.List;
 
 /**
  * HTTP layer for ticket operations.
@@ -83,7 +86,7 @@ public class TicketController {
     @ApiResponses({
             @ApiResponse(
                     responseCode = "200",
-                    description = "Tickets returned successfully"
+                    description = "Tickets returned successfully with pagination metadata"
             ),
             @ApiResponse(
                     responseCode = "400",
@@ -92,25 +95,23 @@ public class TicketController {
             )
     })
     @GetMapping
-    public ResponseEntity<List<TicketResponse>> getTickets(
+    public ResponseEntity<PagedResponse<TicketResponse>> getTickets(
             @Parameter(description = "Optional ticket status filter", example = "OPEN")
             @RequestParam(required = false) TicketStatus status,
 
             @Parameter(description = "Optional ticket priority filter", example = "HIGH")
-            @RequestParam(required = false) TicketPriority priority
-    ) {
-        List<TicketResponse> tickets;
+            @RequestParam(required = false) TicketPriority priority,
 
-        // Route to the narrowest repository query available so filtering stays in the database.
-        if (status != null && priority != null) {
-            tickets = ticketService.findByStatusAndPriority(status, priority);
-        } else if (status != null) {
-            tickets = ticketService.findByStatus(status);
-        } else if (priority != null) {
-            tickets = ticketService.findByPriority(priority);
-        } else {
-            tickets = ticketService.getAllTickets();
-        }
+            @Parameter(description = "Optional assignee search filter", example = "IT Support")
+            @RequestParam(required = false) String assignee,
+
+            @PageableDefault(size = 20)
+            @SortDefault(sort = "createdAt", direction = Sort.Direction.DESC)
+            Pageable pageable
+    ) {
+        // Pageable carries page, size, and sort parameters while explicit arguments hold domain filters.
+        PagedResponse<TicketResponse> tickets =
+                ticketService.searchTickets(status, priority, assignee, pageable);
 
         return ResponseEntity.ok(tickets);
     }

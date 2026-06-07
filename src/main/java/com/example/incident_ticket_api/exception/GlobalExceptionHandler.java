@@ -1,6 +1,7 @@
 package com.example.incident_ticket_api.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -127,5 +128,25 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    /**
+     * Converts invalid sort fields into a 400 instead of exposing the Spring Data exception as a 500.
+     */
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ResponseEntity<ApiErrorResponse> handleInvalidSortProperty(
+            PropertyReferenceException exception,
+            HttpServletRequest request
+    ) {
+        ApiErrorResponse response = new ApiErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase(),
+                "Invalid sort field: " + exception.getPropertyName(),
+                request.getRequestURI(),
+                List.of()
+        );
+
+        return ResponseEntity.badRequest().body(response);
     }
 }

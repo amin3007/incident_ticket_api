@@ -34,6 +34,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.example.incident_ticket_api.dto.PagedResponse;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
+
+import static org.mockito.ArgumentMatchers.isNull;
 
 /**
  * Controller tests for HTTP routing, validation, and error responses.
@@ -57,6 +62,7 @@ class TicketControllerTest {
                 .standaloneSetup(new TicketController(ticketService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .setValidator(validator)
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
                 .build();
 
         objectMapper = new ObjectMapper();
@@ -90,14 +96,18 @@ class TicketControllerTest {
 
     @Test
     void shouldReturnAllTickets() throws Exception {
-        when(ticketService.getAllTickets()).thenReturn(List.of(sampleTicketResponse()));
+        when(ticketService.searchTickets(isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(samplePagedResponse());
 
         mockMvc.perform(get("/api/tickets"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1))
-                .andExpect(jsonPath("$[0].title").value("Login not working"));
+                .andExpect(jsonPath("$.content[0].id").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Login not working"))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(20))
+                .andExpect(jsonPath("$.totalElements").value(1));
 
-        verify(ticketService).getAllTickets();
+        verify(ticketService).searchTickets(isNull(), isNull(), isNull(), any(Pageable.class));
     }
 
     @Test
@@ -114,43 +124,43 @@ class TicketControllerTest {
 
     @Test
     void shouldReturnTicketsByStatus() throws Exception {
-        when(ticketService.findByStatus(TicketStatus.OPEN))
-                .thenReturn(List.of(sampleTicketResponse()));
+        when(ticketService.searchTickets(any(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(samplePagedResponse());
 
         mockMvc.perform(get("/api/tickets")
                         .param("status", "OPEN"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].status").value("OPEN"));
+                .andExpect(jsonPath("$.content[0].status").value("OPEN"));
 
-        verify(ticketService).findByStatus(TicketStatus.OPEN);
+        verify(ticketService).searchTickets(any(), isNull(), isNull(), any(Pageable.class));
     }
 
     @Test
     void shouldReturnTicketsByPriority() throws Exception {
-        when(ticketService.findByPriority(TicketPriority.HIGH))
-                .thenReturn(List.of(sampleTicketResponse()));
+        when(ticketService.searchTickets(isNull(), any(), isNull(), any(Pageable.class)))
+                .thenReturn(samplePagedResponse());
 
         mockMvc.perform(get("/api/tickets")
                         .param("priority", "HIGH"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].priority").value("HIGH"));
+                .andExpect(jsonPath("$.content[0].priority").value("HIGH"));
 
-        verify(ticketService).findByPriority(TicketPriority.HIGH);
+        verify(ticketService).searchTickets(isNull(), any(), isNull(), any(Pageable.class));
     }
 
     @Test
     void shouldReturnTicketsByStatusAndPriority() throws Exception {
-        when(ticketService.findByStatusAndPriority(TicketStatus.OPEN, TicketPriority.HIGH))
-                .thenReturn(List.of(sampleTicketResponse()));
+        when(ticketService.searchTickets(any(), any(), isNull(), any(Pageable.class)))
+                .thenReturn(samplePagedResponse());
 
         mockMvc.perform(get("/api/tickets")
                         .param("status", "OPEN")
                         .param("priority", "HIGH"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].status").value("OPEN"))
-                .andExpect(jsonPath("$[0].priority").value("HIGH"));
+                .andExpect(jsonPath("$.content[0].status").value("OPEN"))
+                .andExpect(jsonPath("$.content[0].priority").value("HIGH"));
 
-        verify(ticketService).findByStatusAndPriority(TicketStatus.OPEN, TicketPriority.HIGH);
+        verify(ticketService).searchTickets(any(), any(), isNull(), any(Pageable.class));
     }
 
     @Test
@@ -308,6 +318,19 @@ class TicketControllerTest {
                 "IT Support",
                 LocalDateTime.of(2026, 5, 4, 10, 0),
                 LocalDateTime.of(2026, 5, 4, 10, 0)
+        );
+    }
+
+    private PagedResponse<TicketResponse> samplePagedResponse() {
+        return new PagedResponse<>(
+                List.of(sampleTicketResponse()),
+                0,
+                20,
+                1,
+                1,
+                true,
+                true,
+                List.of("createdAt,desc")
         );
     }
 }
